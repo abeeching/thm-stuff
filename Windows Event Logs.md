@@ -180,11 +180,13 @@ For the first three questions, we can just run the commands as they are, replaci
 
 **[Task 4, Question 1] Execute the command from Example 1 (as is). What are the names of the logs related to OpenSSH? - OpenSSH/Admin,OpenSSH/Operational**
 
-The next commands come from the online documentation for Get-WinEvent. Doing these on the Virtual Machine should return the following information.
+The next commands come from the online documentation for Get-WinEvent. Some of these examples are provided in the supplemental material here for this task. Doing these on the Virtual Machine should return the following information.
 
 **[Task 4, Question 2] Execute the command from Example 8. Instead of the string `*Policy*` search for `*PowerShell*`. What is the name of the 3rd log provider? - Microsoft-Windows-PowerShell-DesiredStateConfiguration-FileDownloadManager**
 
 **[Task 4, Question 3] Execute the command from Example 9. Use Microsoft-Windows-PowerShell as the log provider. How many event IDs are displayed for this event provider? - 192**
+
+The information can be found in the Microsoft documentation, some of which I have included as supplementary material here.
 
 **[Task 4, Question 4] How do you specify the number of events to display? - -MaxEvents**
 
@@ -192,50 +194,206 @@ The next commands come from the online documentation for Get-WinEvent. Doing the
 
 ### More on Get-WinEvent
 
+Example 4 - Get event logs from a server. `Get-WinEvent -ListLog * -ComputerName localhost | Where-Object { $_.RecordCount }`. ComputerName, localhost, is where the logs are obtained from.
+
+Example 5 - Getting logs from multiple servers.
+```PowerShell
+$S = 'Server01', 'Server02', 'Server03'
+ForEach ($Server in $S) {
+  Get-WinEvent -ListLog Application -ComputerName $Server | Select-Object LogMode, MaximumSizeInBytes, RecordCount, LogName, @{name='ComputerName'; expression={$Server}} | Format-Table -AutoSize
+}
+```
+
+Example 6 - Getting event log providers and log names: `Get-WinEvent -ListProvider *`
+
+Example 7 - Get all event log providers that write to a specific log: `(Get-WinEvent -ListLog Application).ProviderNames`
+
+Example 8 - Get event log provider names that contain a specific string: `Get-WinEvent -ListProvider *Policy*`
+
+Example 9 - Get Event IDs that an event provider generates: `(Get-WinEvent -ListProvider Microsoft-Windows-GroupPolicy).Events | Format-Table Id, Description`
+
+Example 10 - Get log information from event object properties:
+```PowerShell
+$Event = Get-WinEvent -LogName 'Windows PowerShell'
+$Event.Count
+$Event | Group-Object -Property Id -NoElement | Sort-Object -Property Count -Descending # counts by ID
+$Event | Group-Object -Property LevelDisplayName -NoElement # counts by level
+```
+
+Example 11 - Get error events that have a specified st ring in their name: `Get-WinEvent -LogName *PowerShell*, Microsoft-Windows-Kernel-WHEA* | Group-Object -Property LevelDisplayName, LogName -NoElement | Format-Table -AutoSize`
+
+Example 12 - Get events from an archived log: `Get-WinEvent -Path 'C:\Test\Windows Powershell.evtx'`
+
+Example 13 - Get specific number of events from an archived event log: `Get-WinEvent -Path 'C:\Test\PowerShellCore Operational.evtx' -MaxEvents 100`
+
+There's plenty more examples, too. Other parameters include
+- Credential: User account that has permission to perform the action
+- FilterXml: Specifies a structured XML query that the cmdlet selects events with
+- Force: Gets debug anda nalytic logs in addition to other event logs
+- MaxEvents: Specifies the maximum number of events that are returned
+- Oldest: Gets events in oldest-first order
+
 ### Hash Tables
+
+Hashtables are dictionary/associative arrays that store key-value pairs. This might be stuff like... IP addresses and computer names. In PowerShell, each hashtable is a Hashtable. In a hashtable, the order of keys is not determined.
+
+The [ordered] attribute can be used to create an Ordered Dictionary object in PowerShell, where the keys always appear in the order you list them in.
+
+Keys and values in hashtables are .NET objects - they can have any object type. You can create nested hashtables, in which the value of a key is another hashtable.
+
+You can display hashtables by simply typing in the variable name, e.g. $hash. You can also display just the keys ($hash.keys) or the values ($hash.values) as needed. To iterate over keys and values, you can use a foreach block (foreach key in keys), or perhaps you can use ForEach-Object (hash.keys | ForEach-Object). To add keys and values, do `hash[key] = value`. To remove a key-value pair, use `hash.Remove(key)`.
 
 ### More on FilterHashtable
 
+Key names include
+- LogName
+- ProviderName
+- Path
+- Keywords: These are numbers that PowerShell uses to represent certain strings.
+- ID
+- Level: Levels are enumerated values. 5 = Verbose, 4 = Informational, 3 = Warning, 2 = Error, 1 = Critical.
+- StartTime
+- EndTime
+- UserID
+- Data
+- (named-data): This is a named event data field. This might be, say, 'Service' in Perflib event 1008.
+
 ## [Task 5] XPath Queries
+
+XPath, or XML Path Language, is a standardized set of syntax and sematnics that can be used to address parts of an XML document and manipulate strings/numbers/booleans. XPath event queries start with * or Event. Event Viewer can help us construct these queries.
+
+![image](https://user-images.githubusercontent.com/56741029/234389493-9c8b000a-50b9-4810-8700-09f182af5e80.png)
+
+Starting from the first tag, you have...
+- `<Event xmlns...>` --> `*`
+- `<System>` --> `*/System/`
+- `<EventID Qualifiers>` --> `*/System/EventID=100`
+
+So, our final command would either be
+`Get-WinEvent -LogName Application -FilterXPath '*/System/EventID=100'`, OR
+`wevtutil.exe qe Application /q:*/System[EventID=100] /f:text /c:1`
+
+To query for, say, the provider, we want to use the Name attribute of Provider:
+`*/System/Provider[@Name="WLMS"]`
+
+To combine two queries, we would use `and`:
+`Get-WinEvent -LogName Application -FilterXPath '*/System/EventID=101 and */System/Provider[@Name="WLMS"]'`
+
+Alternatively, we could query for elements in EventData:
+
+![image](https://user-images.githubusercontent.com/56741029/234390962-40c5054b-0448-43d8-9e85-2f1b073733b6.png)
+
+To query for TargetUserName, we'd have
+`Get-WinEvent -LogName Security -FilterXPath '*/EventData/Data[@Name="TargetUserName"]="System"'`
+
+For the first question, we need to filter for WLMS events (thus, we'd use the Provider example provided earlier), and we want to filter for a specific System Time. To get the System Time events, we want to query for `*/System/TimeCrated[@SystemTime=...]`.
 
 **[Task 5, Question 1] Using Get-WinEvent and XPath, what is the query to find WLMS events with a System Time of 2020-12-15T01:09:08.940277500Z? - ```Get-WinEvent -LogName Application -FilterXPath '*/System/Provider[@Name="WLMS"] and */System/TimeCreated[@SystemTime="2020-12-15T01:09:08.940277500Z"]'```**
 
+Here, we're looking at EventData. We're specifically looking at the Target User Name, Sam, and a specific Event ID. Combining the work we've done in the examples above, we get this as our query:
+
 **[Task 5, Question 2] Using Get-WinEvent and XPath, what is the query to find a user named Sam with a Logon Event ID of 4720? - ```Get-WinEvent -LogName Security -FilterXPath '*/EventData/Data[@Name="TargetUserName"]="Sam" and */System/EventID=4720'```**
+
+Running the above query on the virtual machine:
+
+![image](https://user-images.githubusercontent.com/56741029/234391621-fab76993-0c96-417c-b4cf-31614262cae1.png)
 
 **[Task 5, Question 3] Based on the previous query, how many results are returned? - 2**
 
 **[Task 5, Question 4] Based on the output from Question #2, what is Message? - A user account was created**
 
+We can change our query from Question #2 to search for Event ID 4724:
+
+![image](https://user-images.githubusercontent.com/56741029/234391858-4e38e053-8495-4c54-a79f-a8d0fc18ebbf.png)
+
 **[Task 5, Question 5] Still working with Sam as the user, what time was Event ID 4724 recorded? (MM/DD/YYYY H:MM:SS [AM/PM]) - 12/17/2020 1:57:14 PM**
+
+We can change the query from Question #2 again so that we're looking for `*/System/Provider`. This gives us the name of the provider at the very top:
+
+![image](https://user-images.githubusercontent.com/56741029/234392154-b1e90500-d6ed-48b7-94f5-ff0351be52f3.png)
 
 **[Task 5, Question 6] What is the Provider Name? - Microsoft-Windows-Security-Auditing**
 
 ### More on XPath
 
+There's a whole manual for XPath on Microsoft's website.
+https://learn.microsoft.com/en-us/previous-versions/dotnet/netframework-4.0/ms256115(v=vs.100)
+
 ## [Task 6] Event IDs
+
+A couple of examples:
+- Detecting if a new service is installed - check Event ID 7045 in System
+- Monitoring if a firewall rule was detected from the host - check Event ID 2006, 2033 in Windows Firewall with Advanced Security/Firewall
+- Monitoring events that correlate with changes to account objects/permissions on system and domain - check Event IDs 4738, 4728, 4670.
+- See Links to Resources for more information.
+
+Some events aren't generated by default, and certain features will need to be enabled and configured such as PowerShell logging. For this case, check the Group Policy/Registry: Local Computer Policy --> Computer Configuration --> Administrative Templates --> Windows Components --> Windows PowerShell
 
 ### Links to Resources
 
+Windows Logging Cheat Sheet - https://static1.squarespace.com/static/552092d5e4b0661088167e5c/t/580595db9f745688bc7477f6/1476761074992/Windows+Logging+Cheat+Sheet_ver_Oct_2016.pdf
+Spotting the Adversary with Windows Event Log Monitoring - https://apps.nsa.gov/iaarchive/library/reports/spotting-the-adversary-with-windows-event-log-monitoring.cfm
+MITRE Attack - https://attack.mitre.org/
+Events to Monitor - https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/plan/appendix-l--events-to-monitor
+Security Auditing and Monitoring Reference - https://www.microsoft.com/en-us/download/confirmation.aspx?id=52630
+
+### More on Logging
+
+It's possible to use Protected Event Logging in Windows 10 and onward, allowing participating applications to encrypt sensitive data written to the event log to be decrypted later on a more secure machine. The public key can be shared widely to multiple machines, while a select few computers should be given the private key. This can be enabled in Group Policy, and if you have the private key, you can decrypt logs with a PowerShell script.
+
 ## [Task 7] Putting Theory into Practice
+
+First up, we need to use the resources provided in Task 6 to figure out what event ID we're looking for. In this case, it's event ID 400, thanks to snooping around on MITRE for downgrade attack information.
+
+![image](https://user-images.githubusercontent.com/56741029/234467787-9dedb26d-188d-4bbf-823b-a141617f19eb.png)
 
 **[Task 7, Question 1] What event ID is to detect a PowerShell downgrade attack? - 400**
 
+Filtering this log, we see that the attack appeared to have finished on 12/18/2020 at 7:50:33 AM. We can see this in Event Viewer.
+
+![image](https://user-images.githubusercontent.com/56741029/234468012-7f629ece-0049-455c-b02f-36a343afe5b0.png)
+
 **[Task 7, Question 2] What is the Date and Time this attack took place? - 12/18/2020 7:50:33 AM**
+
+Filtering for Event ID 104 - which is one of the possible log clear events - yields a single event indicating the System log file was cleared. We need to look at the XML View in order to get the Event *Record* ID.
+
+![image](https://user-images.githubusercontent.com/56741029/234471531-ef2f0083-6cd4-4c0d-90a7-c52beb87b934.png)
 
 **[Task 7, Question 3] A Log clear event was recorded. What is the 'Event Record ID'? - 27736**
 
+In the log mentioned above, scrolling down a little bit tells us the computer name:
+
+![image](https://user-images.githubusercontent.com/56741029/234471595-4ed8aff1-0c79-46c1-a26f-e19d1c3ec99f.png)
+
 **[Task 7, Question 4] What is the name of the computer? PC01.example.corp**
+
+Instead of rummaging through Event Viewer for this, we can use Get-WinEvent to get the oldest PowerShell command. We open PowerShell and navigate to the Desktop, and we remember that Event ID 4104 is used to indicate PowerShell script blocks being created. Therefore, we give this as our command:
+`Get-WinEvent -Path .\merged.evtx -FilterXPath '*/System/EventID=4104' -Oldest -MaxEvents 1 | Format-List`
+
+Doing so gives us this output, which helps us answer the next few questions!
+
+![image](https://user-images.githubusercontent.com/56741029/234473541-09b99fc7-c7b1-4a6e-9a23-02de89b8c99a.png)
 
 **[Task 7, Question 5] What is the name of the first variable within the PowerShell command? - $Va5w3n8**
 
 **[Task 7, Question 6] What is the Date and Time this attack took place? - 8/25/2020 10:09:28 PM**
 
+Fortunately for us, now that we know exactly what we're looking for, we can just open this stuff up in Event Viewer again and look at the XML View to get the Execution Process ID:
+
+![image](https://user-images.githubusercontent.com/56741029/234473864-3ccbe6ac-2762-4d56-b8b3-a149da091e7b.png)
+
 **[Task 7, Question 7] What is the Execution Process ID? - 6620**
+
+One could look up the Event ID associated with Group Security ID enumeration, which is what I did. Microsoft's official website suggests you filter for Event ID 4799 (which, hey, that's the answer to the last question). Doing so and switching to XML View gives us the Group Security ID that was enumerated -- the TargetSid.
+
+![image](https://user-images.githubusercontent.com/56741029/234475126-bc57e3cb-44ca-4d64-827f-2e2adadd8856.png)
 
 **[Task 7, Question 8] What is the Group Security ID of the group she enumerated? - S-1-5-32-544**
 
 **[Task 7, Question 9] What is the event ID? - 4799**
 
 ## Extra Resources: PowerShell and Blue Teaming
+
+Assuming a breach happened, how can PowerShell assist in 
 
 ## Extra Resources: Tampering with Windows Event Tracing
