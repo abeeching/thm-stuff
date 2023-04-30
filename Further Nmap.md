@@ -2,9 +2,23 @@
 
 ## [Task 2] Introduction
 
+Generally speaking, the more knowledge you have about a system, the better. Thus, it's imperative to carry out proper enumeration before exploiting anything. If we have an IP (or IPs) to perform an audit on, we want to know what's up with the "landscape" before we attack. We must establish which services are running on the targets.
+
+The first stage in establishing this map of the landscape is to perform port scanning. When a computer runs a network service, it opens a port - a network construct - to receive the connection. Ports are needed to make multiple network requests or have multiple services available. When loading multiple webpages into multiple tabs, connections are established to remote webservers with different ports. For a server to run multiple services, you must direct traffic to the appropriate service using ports. Network connecctions are made between two ports - an open port listening on the server and a randomly-selected port on your computer.
+
+All computers have a total of 65535 ports; that being said, many of these are registered as standard ports. HTTP is typically port 80, HTTPS is typically port 443. NETBIOS is typically on port 139 and SMB on port 445. Note that, especially in CTFs, *these standard ports may be altered.*
+
+It's nigh-impossible to attack a target without knowing which ports are open, so that's why we're going to talk about Nmap. This is a tool that is usually used for port scanning purposes. It can perform many kindsn of port scans, but the basic theory is that nmap will connect to each port of the target in turn. Depending on how the port responds, nmap determines if it's opened, closed, or filtered (e.g. via firewall). Once we know what the open ports are, we can enumerate the services running on each port. One *could* do this manually, but we also have Nmap so...
+
+We use Nmap since this is currently the industry-standard tool for port scanning. No other scanning tool comes close to matching its functionality, though some other tools are matching it in speed. It's very powerful, especially when taking into account its scripting engine, which can be used to scan for vulnerabilities (and even perform exploits).
+
+With this information in mind, we can answer the first two questions of the task:
+
 **[Task 2, Question 1] What networking constructs are used to direct traffic to the right application on a server? - Ports**
 
 **[Task 2, Question 2] How many of these are available on any network-enabled computer? - 65535**
+
+Well... we know that there are well-known ports, based on our answer to Task 2, Question 1. Taking to Google and looking up well-known ports, we find that there are 1024 ports that are well-known. Nice!
 
 **[task 3, Question 3] (Research) How many of these are considered "well known"? These are the "standard" numbers mentioned in the task. - 1024**
 
