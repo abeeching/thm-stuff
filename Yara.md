@@ -2,13 +2,39 @@
 
 ## Purpose of the Room
 
+Yara - Yet Another Ridiculous Acronym - is another tool that we can use to detect anomalies. Basic Linux familiarity is expected.
+
 ## [Task 2] What is Yara?
+
+Yara can identify information based on both binary and textual patterns, including hexadecimal and strings contained within a file. An example includes "Hello world".
+
+Rules are labels for these patterns. Yara rules can be written to determine if a file is malicious or not, based on features/patterns. Strings, a fundamental part of programming languages, are used to store data. Some examples include
+- Bitcoin wallet data in ransomware
+- C&C server IPs for botnets
+
+Note that malware functionality is not discussed in this room. There's a couple of malware analysis rooms in THM though!
+
+Anyway, the questions below can be answered with the information above.
 
 **[Task 2, Question 1] What is the name of the base-16 numbering sytem that Yara can detect? - hex**
 
 **[Task 2, Question 2] Would the text "Enter your Name" be a string in an application? - Yay**
 
 ## [Task 4] Introduction to Yara Rules
+
+Yara is a pretty easy language to learn, but hard to master. Yara is only as effective as your understanding of the patterns. To use a yara rule is simple. All you need is
+- The rule file
+- The name of the file, directory, or PID
+
+Every rule must have a name and condition. A Yara file (.yar) looks like this:
+
+```
+rule examplerule {
+  condition: true
+}
+```
+
+To run yara, use the syntax `yara [filename].yar [filename/directory to use rule on]`. If it works, you should see something like "examplerule file" -- indicating a match has been found. If not, you'll see an error message stating the file cannot be opened.
 
 ## [Task 5] Expanding on Yara Rules
 
