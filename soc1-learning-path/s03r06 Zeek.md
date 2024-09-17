@@ -91,9 +91,98 @@ The `zeek-cut` tool allows you to cut specific columns from Zeek logs. All logs 
 Generally, CLIs can help provide functionality that may not be present in GUIs. You should be familiar with how to use CLI tools, Berkeley Packet Filters (or the BPF), and perhaps regular expressions. Some commands to know:
 - Command history tools: To view, use `history`. To run the nth command in history, run `!n`. To run the previously issued command, run `!!`.
 - Read files: To read a file, use `cat`. To read the first 10 lines of a file, use `head`. For the last 10 lines, use `tail`. For both head and tail, use `-n` to specify the number of lines to read.
-- To cut the firt 
+- To cut the first field of a file, we can use `cat (FILE) | cut -f 1`. For the first column, we simply use `-c1`.
+- To filter for specific keywords, we use `cat (FILE) | grep (KEYWORDS)`.
+- To sort outputs alphabetically, use `cat (FILE) | sort`. To sort numerically, use `cat (FILE) | sort -n`.
+- To get rid of duplicate lines, use `cat (FILE) | uniq`.
+- To count line nubmers, use `cat (FILE) | wc -l`. To show line numbers, use `cat (FILE) | nl`.
+- To print a certain line, use `cat (FILE) | sed -n '#p'`, where `#` is the line number you want to print. This can be a range, e.g. `10,15`.
+- To print lines below a certain line number, use `cat (FILE) | awk 'NR < 11 {print $0}'`. You can replace the `<` with `==` to print out a specific line.
+- Again, to filter specific fields of Zeek logs, use `cat (ZEEK LOG) | zeek-cut FIELDS ...`
+- There are special combinations and other commands we can use for different purposes:
+  - `sort | uniq` will remove duplicate values. If we want to count the number of occurrences of each value, use `sort | uniq -c`. To sort values numerically and in reverse, use `sort -nr`.
+  - `rev` will reverse string characters.
+  - To split strings on delimiters and keep a certain number of fields, use `cut -d '(DELIMITER)' -f (FIELDS)`, where `(DELIMITER)` may be something like a period, and `(FIELDS)` may be a single number or range.
+  - To display lines that do not contain a certain string, use `grep -v (STRING)`. To avoid matching multiple strings, you can use `grep -v -e (STRING1) -e (STRING2) ...`
+  - To display file information, simply use `file`.
+  - To search for a string everywhere, organize the output into columns, and view the output with less, use `grep -rin (VALUE) * | column -t | less -S`.
 
 ## [Task 5] Zeek Signatures
+
+Zeek signatures can be used to develop rules and event correlations, helping you find activities of interest on a network. Low-level pattern matching and conditions similar to Snort rules are used to this end, and Zeek even has a scripting language. With Zeek scripting, you can chain multiple events together to find some event of interest - we'll talk more about scripting later. Signatures are comprised of three things:
+- Signature ID: The unique signature identifier
+- Conditions: Conditions that allow us to filter packet headers for specific addresses, protocols, port numbers, as well as packet contents for specific values and patterns.
+- Actions: By default, Zeek can create a `signatures.log` file when it has a signature match, but you can also trigger Zeek scripts as needed.
+
+Some common conditions and filters include:
+- For headers:
+  - `src-ip` lets us filter by source IP, and `dst-ip` lets us filter by destination IP.
+  - `src-port` lets us filter by source port, and `dst-port` lets us filter by destination port.
+  - `ip-proto` allows us ot filter by the target protocol, including TCP, UDP, ICMP, ICMP6, IP, and IP6.
+- For content:
+  - `payload` lets us filter by packet payload.
+  - `http-request` allows us to filter with client-side HTTP headers. We can even check request bodies with `http-request-body` and headers with `http-request-header`.
+  - `http-reply-header` allows us to filter by server-side HTTP headers, and `http-reply-body` allows us to filter by server-side HTTP response bodies.
+  - `ftp` allows us to filter by the command line input of FTP sessions.
+- For context, we can use `same-ip` to filter out duplicate source and destination addresses.
+- For actions, we may use `event` to describe a signature match message.
+- Comparison operators include the usual `==`, `!=`, `<`, `<=`, `>`, `>=`
+- Filters can generally accept string, numerical, and regex values.
+
+When running Zeek with a signature file, you can issue the command `zeek -C -r (FILE) -s (SIGNATURE)`. Zeek signature files use the `.sig` extension. The `-C` flag ignores checksum errors, `-r` allows us to read pcap files, and `-s` allows us to use signature files.
+
+The room provides an example of a signature used to detect HTTP cleartext passwords:
+
+```
+signature http-password {
+  ip-proto == tcp
+  dst-port == 80
+  payload /.*password.*/ # This is regex -- when we use .*, we can match a character zero or more times. This will specifically match when a "password" phrase is detected in the payload.
+  event "Cleartext password found!"
+}
+```
+
+When this script is run, any matches will cause an alert to be generated, in addition to new log files - `signatures.log` and `notice.log`. These logs provide basic details about what was found and the signature message, and you can even extract application banners by using `zeek-cut sub_msg` or `zeek-cut sub` as needed. This will help you figure out where the signature match occurs.
+
+The room provides another signature example that can be used to investigate admin login attempts over FTP:
+
+```
+signature ftp-admin {
+  ip-proto == tcp
+  ftp /.*USER.*dmin.*/
+  event "FTP admin login attempt!"
+}
+```
+
+While this is helpful in the case of finding login attempts to the admin account, we may want to consider looking for login attempts into other accounts that may be anomalous. We'll want to generalize this rule a little bit, and we can do so by making use of how FTP reports things. A login failure generates an FTP 530 response, so we can create a signature to look for these instances:
+
+```
+signature ftp-brute {
+  ip-proto == tcp
+  payload /.*530.*Login.*incorrect.*/
+  event "FTP brute force attempt!"
+}
+```
+
+Zeek signature files may consist of multiple signatures, allowing us to have one file with signatures for each event type. Here's a global rule for detecting username input and incorrect password attempts:
+
+```
+signature ftp-username {
+  ip-proto == tcp
+  ftp /.*USER.*/
+  event "FTP username input found!"
+}
+
+signature ftp-brute {
+  ip-proto == tcp
+  payload /.*530.*Login.*incorrect.*/
+  event "FTP brute force attempt!"
+}
+```
+
+By combining these rules together, we can alert on and investigate potential brute-force attempts against different accounts more generally.
+
+It was possible to convert Snort rules to Zeek (Bro) signatures, however workflows between the platforms have since changed since Bro became Zeek.
 
 **[Task 5, Question 1] Investigate the `http.pcap` file. Create the HTTP signature shown in the task and investigate the pcap. What is the source IP of the first event?** - `10.10.57.178`
 
@@ -107,6 +196,36 @@ Generally, CLIs can help provide functionality that may not be present in GUIs. 
 
 ## [Task 6] Zeek Scripts | Fundamentals
 
+As mentioned earlier, Zeek has its own scripting language, giving us a greater ability to investigate and correlate events. Scripts can be used to apply policies as well, in which case they are called policy scripts. Zeek has several different types of scripts and files:
+- Base scripts are those that are installed by default, and are not supposed to be modified. See `/opt/zeek/share/zeek/base`
+- User-generated or modified scripts are scripts that we make, and can be put in `/opt/zeek/share/zeek/site`
+- Policy scripts have their own path, `/opt/zeek/share/zeek/policy`
+- To automatically load or use scripts in live sniffing mode, you must identify the script in the Zeek configuration file, found in `/opt/zeek/share/zeek/site/local.zeek`. You can also just load a script for a single usage of Zeek, as with signatures.
+
+Some key points:
+- Zeek scripts use the `.zeek` extension.
+- User-generated and modified scripts should ONLY be placed in `zeek/base` -- do not modify the base scripts.
+- You can call scripts in live-monitoring mode with the commands `load @/script/path` or `load @script-name` in the `local.zeek` file.
+- Zeek is event-oriented, so when we write scripts, we'll want to write them to handle events of interest.
+
+Zeek scripting can be used to automate tasks that you'd normally have to manually perform in Wir3eshark, tshark, or tcpdump. If we wanted to, say, extract all available DHCP hostnames from a pcap file, we can do so in a few ways. Wireshark allows us to get this information directly, but since Wireshark is a GUI, it's not exactly easy to transfer the data to another tool for processing. On the other hand, tcpdump and tshark are command line tools, but formatting will require piping the output through a lot of different commands which can get unwieldy. Here's a Zeek script that can handle the job in four lines:
+
+```
+event dhcp_message (c: connection, is_orig: bool, msg: DHCP::Msg, options: DHCP::Options)
+{
+  print options$host_name;
+}
+```
+
+To use a script, run the command `zeek -C -r (FILE) (SCRIPT)`.
+
+Our goal at this point is to cover the logic behind Zeek scripting and how to use Zeek scripts. There are online resources - including those from the Zeek devs themselves - that are designed to get you up to speed with Zeek scripting.
+
+Zeek has various trigger conditions and built-in functions (BIFs) that can be used to extract information from traffic data. Customized scripts can be found in the following locations:
+- `/opt/zeek/share/zeek/base/bif`
+- `/opt/zeek/share/zeek/base/bif/plugins`
+- `/opt/zeek/share/zeek/base/protocols`
+
 **[Task 6, Question 1] Investigate the `smallFlows.pcap` file. Investigate the `dhcp.log` file. What is the domain value of the `vinlap01` host?** - `astaro_vineyard`
 
 **[Task 6, Question 2] Investigate the `bigFlows.pcap` file. Investigate the `dhcp.log` file. What is the number of identified unique hostnames?** - 17
@@ -114,6 +233,62 @@ Generally, CLIs can help provide functionality that may not be present in GUIs. 
 **[Task 6, Question 3] Investigate the `dhcp.log` file. What is the identified domain value?**- `jaalam.net`
 
 ## [Task 7] Zeek Scripts | Scripts & Signatures
+
+Zeek scripts can contain operators, types, attributes, declarations, statements, and directives. There are two events that can be called once Zeek starts and once ZZeek stops. These events do not have parameters:
+
+```
+event zeek_init() # runs when Zeek process starts
+{
+  print ("Started Zeek"); # displays a message on the terminal
+}
+
+event zeek_done() # runs when Zeek process stops
+{
+  print ("Stopped Zeek");
+}
+```
+
+Zeek will create logs in the working directory separately from any scripting tasks.
+
+We can create a script to print packet data to the terminal, thus allowing us to see raw data. Since we want to request the details of a connection, we can use the `new_connection` event, which is automatically generated for each new connection. This data won't be very helpful to us yet - we'd need to process it first - but it's good to see what the bulk data looks like before we start processing it.
+
+```
+event new_connection(c: connection)
+{
+  print c;
+}
+```
+
+We can then print specific events of interest by referring to specific tags, such as the id value and the field name. The fields will be the same as the fields in the log files.
+
+```
+event new_connection(c: connection)
+{
+  print ("###################################");
+  print ("");
+  print ("New connection found!");
+  print ("");
+  print fmt ("Source Host: %s # %s --->", c$id$orig_h, c$id$orig_p); # We use %s to indicate where we'd like to have the string output.
+  print fmt ("Destination Host: %s # %s <---", c$id$resp_h, c$id$resp_p); # The value c$id is the reference field that we're trying to use.
+  print ("");
+}
+```
+
+It's possible to use scripts in conjunction with other scripts and signatures for further event correlation. Let's revisit the `ftp-admin` script from earlier -- this time, we'll try to detect if that rule got any hits:
+
+```
+event signature_match (state: signature_state, msg: string, data: string)
+{
+  if (state$sig_id == "ftp-admin")
+  {
+    print ("Signature hit! --> #FTP-Admin ");
+  }
+}
+```
+
+This simply checks if there is a signature hit, and if so, tells us via the terminal. The `signature_match` event helps us with this. There are, of course, other events -- you can check the Zeek documentation for more events and required parameters.
+
+If we awnt to load all local scripts from the `local.zeek` file, we can run the `local` command with Zeek: `zeek -C -r (FILE) local`. Zeek will provide additional log files, such as `loaded_scripts.log`, `capture_loss.log` and more. Zeek does not provide log files for scripts that do not have any hits or results. We may also identify specific script paths if we need to load a specific script or framework. In this case, we'd run the command `zeek -C -r (FILE) (SCRIPT PATH)`. Zeek's documentation contains some prebuilt scripts and frameworks that we can use as needed.
 
 **[Task 7, Question 1] Investigate the `sample.pcap` file with `103.zeek` script. Investigate the terminal output. What is the number of detected new connections?** - 87
 
@@ -127,6 +302,12 @@ Generally, CLIs can help provide functionality that may not be present in GUIs. 
 
 ## [Task 8] Zeek Scripts | Frameworks
 
+The frameworks that Zeek provides can be used to discover different events of interest. We're interested in a few common frameworks and functions - specifically, the functionalities provided by the File Framework:
+- The `hash-all-files` script gives us `md5`, `sha1`, and `sha256` fields in the `files.log` log, so we can get hashes for any detected files easily.
+- The `extrat-all-files.zeek` script will (as the name suggests) extract all files from the pcap file. The new files will appear in an `extract_files` folder, and you can use `ls` and `file` to get an idea of what Zeek found. This includes timestamp information, source protocols, and connection IDs. You can correlate this information with other logs as needed.
+
+There is also a functionality provided by the Notice Framework that we'd like to cover - the Intelligence function. This requires a feed to match and create alerts from network traffic. The feed (source file) must be tab-delimited, and you need to manually update the source. Adding new lines is simple enough, but deleting lines requires that Zeek be redeployed. The intelligence source information can be found in `/opt/zeek/intel/zeek_intel.txt`.
+
 **[Task 8, Question 1] Investigate the `case1.pcap`file with `intelligence-demo.zeek` script. Investigate the `intel.log` file. Look at the second finding, where was the intel info found?** - `IN_HOST_HEADER`
 
 **[Task 8, Question 2] Investigate the `http.log` file. What is the name of the downloaded .exe file?** - `knr.exe`
@@ -136,6 +317,21 @@ Generally, CLIs can help provide functionality that may not be present in GUIs. 
 **[Task 8, Question 4] Investigate the `case1.pcap` file with `file-extract-demo.zeek` script. Investigate the `extract-files` folder. Review the contents of the text file. What is written in the file?** - Microsoft NCSI
 
 ## [Task 9] Zeek Scripts | Packages
+
+Lastly, the Zeek Package Manager allows users to install and setup third-party scripts and plugins to extend Zeek functionalities. This is installed with Zeek and can be accessed with `zkg`. Using this tool requires root privileges. Commands include
+- `zkg install (PACKAGE PATH)` - allows you to install a package.
+- `zkg install (GIT URL)` - allows you to install a package from a Git link.
+- `zkg list` - lists installed packages
+- `zkg remove` - removes installed packages
+- `zkg refresh` - checks for version updates for installed packages
+- `zkg upgrade` - updates installed packages.
+
+There are multiple ways of using packages. You can use them as frameworks and call specific packages each time you use Zeek, you can use the `@load` method to load them via a script (which tends to be common), and you can also call package names directly if the packages were installed by `zkg`:
+- If you want to call it with a script, use `zeek -Cr (FILE) (ZEEK SCRIPT)`. This assumes the Zeek script has `@load (SCRIPT PATH)` in there somewhere.
+- You can call it from a path: `zeek -Cr (FILE) (PATH)`.
+- You can call it with a package name: `zeek -Cr (FILE) (NAME)`.
+
+There are many packages - the ones given in the room as examples include packages to sniff out cleartext credentials as well as packages to sniff out geolocation information for IP addresses.
 
 **[Task 9, Question 1] Investigate the `http.pcap` file with the `zeek-sniffpass` module. Investigate the `notice.log` file. Which username has more module hits?** - BroZeek
 
