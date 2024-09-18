@@ -38,9 +38,21 @@ If you just want to read a pcap file, you run `zeek -C -r (PCAP)`. The parameter
 
 When it comes time to investigate the generated logs, you will need to make use of command-line tools such as `cat`, `cut`, `grep`, `sort`, and `uniq`, along with other tools specific to Zeek.
 
+We simply run `zeek -v` to get the version information:
+
+![image](https://github.com/user-attachments/assets/1bb32acf-5453-4d91-be7c-865698cd7bc1)
+
 **[Task 2, Question 1] What is the installed Zeek instance version number?** - 4.2.1
 
+And here, we simply run `zeekctl`:
+
+![image](https://github.com/user-attachments/assets/7221d445-8e77-435a-b6fb-0d4f07c87cd9)
+
 **[Task 2, Question 2] What is the version of the ZeekControl module?** - 2.4.0
+
+We simply run `zeek -C -r sample.pcap` from `Exercise-Files/TASK-2`. Once we do so, we can use `ls` to list all the logs that were created in the directory, of which there are eight:
+
+![image](https://github.com/user-attachments/assets/73b7116f-b041-40e4-809b-5c757da65a62)
 
 **[Task 2, Question 3] Investigate the `sample.pcap` file. What is the number of generated alert files?** - 8
 
@@ -80,9 +92,21 @@ Once you run Zeek, you can view logs by using your standard Linux command line t
 
 The `zeek-cut` tool allows you to cut specific columns from Zeek logs. All logs have field names in the beginning that you can use with `zeek-cut`. If, for instance, we wanted to grab the UID, protocol, source/destination hosts, and source/destination ports from `conn.log`, we'd want to run the command `cat conn.log | zeek-cut uid proto id.orig_h id.orig_p id.resp_h id.resp_p`. This lets us extract information with minimal effort.
 
+Here we run `zeek -C -r sample.pcap` to generate the logs, and then we check `dhcp.log`. We can spot the hostnames easily by just using `cat`, but we can make it a little easier to read if we use `cat dhcp.log | zeek-cut host_name`. Note that we can see the field names easily if we use `head`.
+
+![image](https://github.com/user-attachments/assets/60254581-5e90-4310-8c4f-3deb3d29747c)
+
 **[Task 3, Question 1] Investigate the `sample.pcap` file. Investigate the `dhcp.log` file. What is the available hostname?** - Microknoppix
 
+The field in question we would want to look at is `query`. We can run the command `cat dns.log | zeek-cut query` if we wanted to figure out how many unique DNS queries there are. We could also extend this command so we can explicitly see how many unique DNS queries there are: `cat dns.log | zeek-cut query | sort | uniq -c`.
+
+![image](https://github.com/user-attachments/assets/71fa5244-b6e6-4202-8b9c-0dd5dc644667)
+
 **[Task 3, Question 2] Investigate the `dns.log` file. What is the number of unique DNS queries?** - 2
+
+We'd want to look at the `duration` field in `conn.log`. We could get the longest connection duration if we use `cat conn.log | zeek-cut duration | sort -n` to sort by numerical values:
+
+![image](https://github.com/user-attachments/assets/f7c13a83-d457-4670-8593-55957af59f75)
 
 **[Task 3, Question 3] Investigate the `conn.log` file. What is the longest connection duration?** - 332.319364
 
@@ -184,13 +208,37 @@ By combining these rules together, we can alert on and investigate potential bru
 
 It was possible to convert Snort rules to Zeek (Bro) signatures, however workflows between the platforms have since changed since Bro became Zeek.
 
+We would first need to edit `TASK-5/http/http-password.sig` so that it actually spots passwords. We can add the missing information from the sample signature above.
+
+![image](https://github.com/user-attachments/assets/0fbb6c90-df7d-4552-ae03-6abf91481cc3)
+
+Once we create this signature, we run `zeek -C -r http.pcap -s http-password.sig`. Once we do this, any matches against this signature file will be noted in `notice.log`, and we can specifically extract information from the `id.orig_h` and `id.orig_p` fields to get the source IP and source port information at a glance. Our command would be `cat notice.log | zeek-cut id.orig_h id.orig_p`.
+
+![image](https://github.com/user-attachments/assets/32361568-b167-4532-895e-0c83a5b6bb4b)
+
 **[Task 5, Question 1] Investigate the `http.pcap` file. Create the HTTP signature shown in the task and investigate the pcap. What is the source IP of the first event?** - `10.10.57.178`
 
 **[Task 5, Question 2] What is the source port of the second event?** - 38712
 
+We are primarily concerned with the `id.orig_p`, `orig_pkts`, and `resp_pkts`. We can run the command `cat conn.log | zeek-cut id.orig_p orig_pkts resp_pkts` to get a list of the sent and received packets over different ports.
+
+![image](https://github.com/user-attachments/assets/ed1576a2-32c6-4b09-ad0e-0b567526a7a9)
+
 **[Task 5, Question 3] Investigate the `conn.log`. What is the total number of the sent and received packets from source port 38706?** - 20
 
+First, we need to finish the `TASK-5/ftp/ftp-bruteforce.sig` signature using the sample signatures from the task:
+
+![image](https://github.com/user-attachments/assets/48138c56-79d4-44a4-8302-cf0d52bcde2a)
+
+And now we run `zeek -C -r ftp.pcap -s ftp-bruteforce.sig`. Each event gets a unique UID, so we can sort and count based on the UID. We need to count the number of unique UIDs, so we can run the command `cat notice.log | zeek-cut uid | sort -n | uniq | wc -l` -- each UID will get printed on its own line, so this will give us the number of unique events.
+
+![image](https://github.com/user-attachments/assets/654d6694-928b-4b6b-81a5-c0d40d8fb82a)
+
 **[Task 5, Question 4] Investigate the `notice.log`. What is the number of unique events?** - 1413
+
+We're chiefly focused on the `ftp-brute` signature, or the one that displays `FTP Brute-force Attempt!` as a message. One way to do this is to check `signatures.log` and sort on `event_msg`. The command would be `cat signatures.log | zeek-cut event_msg | sort -n |  uniq -c` -- this will give us a count of how many matches there are of each event type.
+
+![image](https://github.com/user-attachments/assets/f8fdd127-9a2b-4f75-846d-30cdd79b45ee)
 
 **[Task 5, Question 5] What is the number of `ftp-brute` signature matches?** - 1410
 
@@ -226,15 +274,27 @@ Zeek has various trigger conditions and built-in functions (BIFs) that can be us
 - `/opt/zeek/share/zeek/base/bif/plugins`
 - `/opt/zeek/share/zeek/base/protocols`
 
+We run the command `zeek -C -r smallFlows.pcap dhcp-hostname.zeek` in `TASK-6/smallflow`, and then once we do we can look at `dhcp.log`. We specifically look at `host_name` and `domain`, so our command would be `cat dhcp.log | zeek-cut host_name domain`.
+
+![image](https://github.com/user-attachments/assets/22bc16ee-48da-4143-9c85-a8e35fc1953d)
+
 **[Task 6, Question 1] Investigate the `smallFlows.pcap` file. Investigate the `dhcp.log` file. What is the domain value of the `vinlap01` host?** - `astaro_vineyard`
 
+In this case, we'd want to run the same command in `TASK-6/bigflow`, and then run `cat dhcp.log | zeek-cut host_name | sort | uniq`. We could also use `wc -l`, but we'd have to exclude 1 from the final count since one of the hostnames is empty. Thus, we have 17:
+
+![image](https://github.com/user-attachments/assets/06645fb4-aab2-4511-bc5d-1e5d50b31e33)
+
 **[Task 6, Question 2] Investigate the `bigFlows.pcap` file. Investigate the `dhcp.log` file. What is the number of identified unique hostnames?** - 17
+
+We need to look at the values in the `domain` field. We can simply run `cat dhcp.log | zeek-cut domain`, though we can confirm our results if we also use `sort` and `uniq`.
+
+![image](https://github.com/user-attachments/assets/33148b7b-9b46-41c6-a845-f282939eaea7)
 
 **[Task 6, Question 3] Investigate the `dhcp.log` file. What is the identified domain value?**- `jaalam.net`
 
 ## [Task 7] Zeek Scripts | Scripts & Signatures
 
-Zeek scripts can contain operators, types, attributes, declarations, statements, and directives. There are two events that can be called once Zeek starts and once ZZeek stops. These events do not have parameters:
+Zeek scripts can contain operators, types, attributes, declarations, statements, and directives. There are two events that can be called once Zeek starts and once Zeek stops. These events do not have parameters:
 
 ```
 event zeek_init() # runs when Zeek process starts
@@ -290,13 +350,33 @@ This simply checks if there is a signature hit, and if so, tells us via the term
 
 If we awnt to load all local scripts from the `local.zeek` file, we can run the `local` command with Zeek: `zeek -C -r (FILE) local`. Zeek will provide additional log files, such as `loaded_scripts.log`, `capture_loss.log` and more. Zeek does not provide log files for scripts that do not have any hits or results. We may also identify specific script paths if we need to load a specific script or framework. In this case, we'd run the command `zeek -C -r (FILE) (SCRIPT PATH)`. Zeek's documentation contains some prebuilt scripts and frameworks that we can use as needed.
 
+We'll need to go to `TASK-7/101`. The script will output "New Connection Found!" to the terminal for each new connection, so we can run the command `zeek -C -r sample.pcap 103.zeek | grep "New Connection Found!" | wc -l` to see how many new connections were found:
+
+![image](https://github.com/user-attachments/assets/7a914bd6-d974-48da-a9d0-ef30e66096a6)
+
 **[Task 7, Question 1] Investigate the `sample.pcap` file with `103.zeek` script. Investigate the terminal output. What is the number of detected new connections?** - 87
+
+Now we need to run the command `zeek -C -r ftp.pcap -s ftp-admin.sig 201.zeek | grep "Signature hit!" | wc -l`. We might also be able to do this without using grep (i.e., just use `wc -l`), but this ensures that we only count signature hits. We can also check `signatures.log` and using `zeek-cut` on the `event_msg` field, `sort`, and `uniq -c`.
+
+![image](https://github.com/user-attachments/assets/05d4dbb7-0892-480a-ace9-e43b21c950a1)
 
 **[Task 7, Question 2] Investigate the `ftp.pcap` file with `ftp-admin.sig` signature and `201.zeek` script. Investigate the `signatures.log` file. What is the number of signature hits?** - 1401
 
+The user is stated in the `sub_msg` field of `signatures.log`, so we run `cat signatures.log | zeek-cut sub_msg | sort | uniq -c` to see how many hits there are for "administrator".
+
+![image](https://github.com/user-attachments/assets/a2dd35b5-3d6a-4504-b0d0-37228c6c109c)
+
 **[Task 7, Question 3] Investigate the `signatures.log` file. What is the total number of `administrator` username detections?** - 731
 
+We would use the `local` parameter to run all local scripts, so our Zeek command would be `zeek -C -r ftp.pcap local`. This generates a `loaded-scripts` file, from which we may grep for scripts. Our command would be something like `cat loaded_scripts.log | grep '.zeek' | wc -l`, since each script is on its own line, and Zeek scripts have a `.zeek` extension.
+
+![image](https://github.com/user-attachments/assets/ce9274dd-68f3-4d2e-b2ed-46cdaea53299)
+
 **[Task 7, Question 4] Investigate the `ftp.pcap` file with all local scripts, and investigate the `loaded_scripts.log` file. What is the total nubmer of loaded scripts?** - 498
+
+Now we run `zeek -C -r ftp-brute.pcap /opt/zeek/share/zeek/policy/protocols/ftp/detect-bruteforcing.zeek` in `TASK-7/202`. Then we check `notice.log`. The file is small enough for us to just `cat` it - we can see that there are two recorded events.
+
+![image](https://github.com/user-attachments/assets/03befad7-6d08-4670-b7d0-cb8f68a9489c)
 
 **[Task 7, Question 5] Investigate the `ftp-brute.pcap` file with `/opt/zeek/share/zeek/policy/protocols/ftp/detect-bruteforcing.zeek` script. Investigate the `notice.log` file. What is the total number of brute-force detections?** - 2
 
@@ -308,11 +388,31 @@ The frameworks that Zeek provides can be used to discover different events of in
 
 There is also a functionality provided by the Notice Framework that we'd like to cover - the Intelligence function. This requires a feed to match and create alerts from network traffic. The feed (source file) must be tab-delimited, and you need to manually update the source. Adding new lines is simple enough, but deleting lines requires that Zeek be redeployed. The intelligence source information can be found in `/opt/zeek/intel/zeek_intel.txt`.
 
+We run `zeek -C -r case1.pcap intelligence-demo.zeek` and look at the generated `intel.log` file. The file is small enough for us to use `cat` -- however, it may help to go further and use `zeek-cut` on the `seen.where` field -- this shows us _where_ the intel was located. In the overall file, intel locations are written like "DNS::IN_REQUEST".
+
+![image](https://github.com/user-attachments/assets/690ab38e-9437-4c0a-bb52-6c9dfbd4e092)
+
 **[Task 8, Question 1] Investigate the `case1.pcap`file with `intelligence-demo.zeek` script. Investigate the `intel.log` file. Look at the second finding, where was the intel info found?** - `IN_HOST_HEADER`
+
+We can check the `http.log` file, and since we're looking for a downloaded `.exe` file, we can just grep for "exe"; our command would be `cat http.log | grep "exe"`. We can see the file name in the results:
+
+![image](https://github.com/user-attachments/assets/8a0bf42f-c9e5-4de4-b970-92d89563bd4d)
 
 **[Task 8, Question 2] Investigate the `http.log` file. What is the name of the downloaded .exe file?** - `knr.exe`
 
+We can `cat` the `http.log` file. The file does not contain filenames, but it does contain MIME types; we would be looking for the file that has `application/x-dosexec` as its MIME type. To make it easier to read, we can use `zeek-cut` to extract only the MIME types and the MD5 hashes, making our command `cat http.log | zeek-cut mime_type md5`:
+
+![image](https://github.com/user-attachments/assets/3f9513dc-9823-4a40-90d2-fa5edb257a6d)
+
 **[Task 8, Question 3] Investigate the `case1.pcap` file with `hash-demo.zeek` script. Investigate the `files.log` file. What is the MD5 hash of the downloaded `.exe` file?** - `cc28e40b46237ab6d5282199ef78c464`
+
+We can run `zeek -C -r case1.pcap file-extract-demo.zeek`, and then `cd` into the newly-created `extract_files` folder. We'd want to use `file *` (or just `file` with each individual file) to figure out which file is the text file -- in this case, it's the one ending with `Fpgan59p6uvNzLFja`:
+
+![image](https://github.com/user-attachments/assets/dc12d9ed-d41b-4c64-b8be-a7b94e0b118e)
+
+Knowing that this is the text file, we can just `cat` it. It looks a little weird, but it's right next to where we'd put in our next command in the terminal:
+
+![image](https://github.com/user-attachments/assets/db12b28d-128e-413f-a705-e89e1da99c99)
 
 **[Task 8, Question 4] Investigate the `case1.pcap` file with `file-extract-demo.zeek` script. Investigate the `extract-files` folder. Review the contents of the text file. What is written in the file?** - Microsoft NCSI
 
@@ -333,10 +433,26 @@ There are multiple ways of using packages. You can use them as frameworks and ca
 
 There are many packages - the ones given in the room as examples include packages to sniff out cleartext credentials as well as packages to sniff out geolocation information for IP addresses.
 
+Since these packages were installed in the VM with `zkg`, we can use `zeek -C -r http.pcap zeek-sniffpass` in `TASK-9/cleartext-pass` to get the information we need. The `msg` field in `notice.log` tells us what passwords were found for what users, so we can use `sort` and `uniq -c` to see what username got more hits. The command in this case would be `cat notice.log | zeek-cut msg | sort | uniq -c`. There also aren't a lot of hits, so you could count them manually if you wanted to.
+
+![image](https://github.com/user-attachments/assets/b3645307-04dd-4c16-a22e-558e3bcdfde2)
+
 **[Task 9, Question 1] Investigate the `http.pcap` file with the `zeek-sniffpass` module. Investigate the `notice.log` file. Which username has more module hits?** - BroZeek
+
+Now we run `zeek -C -r case2.pcap geoip-conn` and check the `conn.log` file. We can use `head` to investigate the first few entries -- we're only looking for one city -- or we can try to use `zeek-cut` against the various city-related fields. We can find city names in the `geo.resp.city` field specifically. Using `sort` and `uniq -c`, we see that one city is mentioned. Our command is `cat conn.log | zeek-cut geo.resp.city | sort | uniq -c`.
+
+![image](https://github.com/user-attachments/assets/b390a4f9-90de-402c-ab48-ca72a3624348)
 
 **[Task 9, Question 2] Investigate the `case2.pcap` file with `geoip-conn` module. Investigate the `conn.log` file. What is the name of the identified City?** - Chicago
 
+We can also add `id.resp_h` to our `zeek-cut` command above to extract the related IP addresses. Again, the relevant entries are pretty close to the top of the file, so `cat conn.log | zeek-cut id.resp_h geo.resp.city | head` will suffice:
+
+![image](https://github.com/user-attachments/assets/d17d00ef-c81c-44be-aa3f-23e1653d54d0)
+
 **[Task 9, Question 3] Which IP address is associated with the identified City?** - `23.77.86.54`
+
+Here, we can simply run `zeek -C -r case2.pcap sumstats-counttable.zeek` and count the number of unique status codes that come up -- the output is small enough to warrant this strategy:
+
+![image](https://github.com/user-attachments/assets/2a65c8c2-c7ac-4bdd-a0cf-2b1e486f1179)
 
 **[Task 9, Question 4] Investigate the `case2.pcap` file with `sumstate-counttable.zeek` script. How many types of status codes are there in the given traffic capture?** - 4
