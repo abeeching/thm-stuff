@@ -111,7 +111,11 @@ The basic syntax for capture/BPF filters is as follows (with additional informat
   - To filter MAC addresses, use `-f "ether host (MAC)"`.
   - You can also filter protocols with IP numbers assigned by IANA. For instance, to filter ICMP, you may want to use `-f "ip proto 1"`. A list of protoocl numbers can be found on IANA's website.
 
-
+The `terminator` terminal insatnce allows you to set up a split-screen view from within a single terminal, and it is helpful for our purposes since it allows us to easily create test traffic for us to sniff. The idea will be to run tshark in one terminal to sniff traffic, and then to run commands in the other terminal to create network noise. The sniffed packets should appear in the first terminal.
+- Host filtering (capturing traffic to or from a specific host): generate traffic with `curl (URL)` and collect with `tshark -f "host (URL)"`.
+- IP filtering (capturing traffic to or from specific IPs/ports): generate traffic with `nc (IP) (PORT) -vw (TIMEOUT)` and capture with `tshark -f "host (IP)"`
+- Port filtering (capturing traffic to or from specific IPs/ports): generate traffic with `nc (IP) (PORT) -vw (TIMEOUT)` and capture with `tshark -f "host (PORT)"`
+- Protocol filtering (capturing traffic over a certain protocol): traffic generation may vary. For instance, `nc -u (IP) (PORT) -vw (TIMEOUT)` will cause traffic to be sent over UDP. To capture over a protocol, use `tshark -f "(PROTOCOL)"`.
 
 **[Task 7, Question 1] What is the number of packets with SYN bytes?** - 2
 
@@ -120,6 +124,16 @@ The basic syntax for capture/BPF filters is as follows (with additional informat
 **[Task 7, Question 3] What is the number of packets with ACK bytes?** - 8
 
 ## [Task 8] TShark Fundamentals V | Packet Filtering Options: Display Filters
+
+Wireshark's display filter syntax is used, and you can use its built-in Display Filter Expression feature to break down the protocols for filters. You can use boolean opeartors here too. You should use single quotes for filters, since this can help mitigate space/bash expansion problems. Some common filters are as follows (prefaced with `-Y`):
+- Filter for an IP without specifying direction: `'ip.addr == (IP)'`
+- Filter a network range: `'ip.addr == (CIDR)'`
+- Filter a source IP: `'ip.src == (IP)'`. For a destination IP: `'ip.dst == (IP)'`.
+- Filter a TCP port: `'tcp.port == (PORT)'`. For source ports: `'tcp.srcport == (PORT)'`.
+- HTTP packets: `'http'`. For response codes, use `'http.response.code == (CODE)'`.
+- DNS packets: `'dns'`. For certain query types, use `'dns.qry.type == (TYPE)'`.
+
+Remember that when you filter, you can use `nl` to get a numbered list of your output. Simply pipe the tshark output to `nl` to do so.
 
 **[Task 8, Question 1] What is the number of packets with a `65.208.228.223` IP address?** - 34
 
