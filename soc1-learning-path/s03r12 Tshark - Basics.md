@@ -15,6 +15,10 @@ TShark is a text-based tool useful for data carving, in-depth packet analysis, a
 - `sed` is a stream editor that allows you to parse and transform text
 - `awk` is a scripting language used with pattern searching and processing
 
+For this first task, we'll simply run `capinfos demo.pcapng` to retrieve information for this packet capture. The RIPEMD160 value is given in the output:
+
+![image](https://github.com/user-attachments/assets/ace0f54c-988b-4a43-a163-9cc261415610)
+
 **[Task 2, Question 1] View the details of the demo.pcapng file with "capinfos." What is the RIPEMD160 value?** - `6ef5f0c165a1db4a3cad3116b0c5bcc0cf6b9ab7`
 
 ## [Task 3] TShark Fundamentals I | Main Parameters I
@@ -28,7 +32,15 @@ There are some built-in options and parameters that you need to be able to use t
 
 Tshark does let you sniff traffic over a chosen interface. The sniffing functionality requires superuser privileges. To view available interfaces, use `sudo tshark -D`. Then, if you want to use tshark over an interface, run `tshark -i (INTERFACE NUMBER)`. If you don't provide an interface number, Tshark will use the first available interface.
 
+To get the version information for tshark in the VM, we can just run `tshark -v`:
+
+![image](https://github.com/user-attachments/assets/e1f00ca1-ea1b-427b-b0f2-583a269f70e3)
+
 **[Task 3, Question 1] What is the installed TShark version in the given VM?** - 3.2.3
+
+And to get the list of instances, use `sudo tshark -D`. tshark numbers them for you, too!
+
+![image](https://github.com/user-attachments/assets/00e1f1a8-ee91-4224-b8c8-932e4cc49b43)
 
 **[Task 3, Question 2] List the available interfaces with TShark. What is the number of available interfaces in the given VM?** - 12
 
@@ -48,9 +60,21 @@ We use the above parameters for the following use cases:
 - We may need to get more information about a packet, namely what's found in the actual data. It helps to use `-x`, though it may be be best to reduce the number of packets under consideration first.
 - You may also want to get more verbose output to see more details for each packet. This can be done with `-v`. Since there's a lot of information in these packets, you should try to use the option for a specific packet. Verbosity is best applied once you've filtered the packets of interest.
 
+Now let's look at some packets with tshark. If we run `tshark -r demo.pcapng -c 29`, we will be able to see the 29th packet at the bottom of the output. The flags assigned are in brackets:
+
+![image](https://github.com/user-attachments/assets/9f6377ae-5c20-4474-a412-65d4870f39c1)
+
 **[Task 4, Question 1] Read the "demo.pcapng" file with TShark. What are the assigned TCP flags in the 29th packet?** - PSH, ACK
 
+The 25th packet is a little higher up in the output from the previous question, so we simply examine it and look for `Ack=...`:
+
+![image](https://github.com/user-attachments/assets/fea766ac-ea6a-452e-98c4-4a253b55f551)
+
 **[Task 4, Question 2] What is the ACK value of the 25th packet?** - 12421
+
+The Window Size Value is given by `Win=...`. We can examine the tshark output -- perhaps running it again with `-c 9` -- and see the Window Size as given by tshark:
+
+![image](https://github.com/user-attachments/assets/bb35b0cf-0d6d-4050-a8d7-c4a346306897)
 
 **[Task 4, Question 3] What is the "Window size value" of the 9th packet?** - 9660
 
@@ -72,6 +96,8 @@ These parameters only work in the capturing/sniffing mode. Attempting to use the
 
 As a heads-up, you can use both `-a` and `-b` parameters; however, there must be one `-a` (or auto-stop) parameter present, unless you want tshark to run indefinitely.
 
+The information needed for the next two questions is given above.
+
 **[Task 5, Question 1] Which parameter can help analysts create a continuous capture dump?** - `-b`
 
 **[Task 5, Question 2] Can we combine autostop and ring buffer parameters with TShark?** - y
@@ -87,6 +113,8 @@ Capture filters have limited usability for filtering, and they're just there to 
 The parameters for the different filtering types are:
 - `-f` for capture filters, which can be specified with BPF and Wireshark capture filters.
 - `-Y` for display filters, which can be specified with Wireshark display filters.
+
+The information needed for the next two questions is given above.
 
 **[Task 6, Question 1] Which parameter is used to set Capture Filters?** - `-f`
 
@@ -117,9 +145,23 @@ The `terminator` terminal insatnce allows you to set up a split-screen view from
 - Port filtering (capturing traffic to or from specific IPs/ports): generate traffic with `nc (IP) (PORT) -vw (TIMEOUT)` and capture with `tshark -f "host (PORT)"`
 - Protocol filtering (capturing traffic over a certain protocol): traffic generation may vary. For instance, `nc -u (IP) (PORT) -vw (TIMEOUT)` will cause traffic to be sent over UDP. To capture over a protocol, use `tshark -f "(PROTOCOL)"`.
 
+For these questions, we will run `terminator` in a terminal window. This opens a new window with two emulated terminal instances. In one instance, we'll run `tshark -f "host 10.10.10.10"`, and in the other, we'll run `curl -v 10.10.10.10`.
+
+![image](https://github.com/user-attachments/assets/f4cea95a-e76e-4fe8-8a01-882822874c79)
+
+Fortunately, there's not a lot of packets, so we could answer the next few questions just by scrolling through the tshark output. For this first question, we'll want to look for packets with SYN in brackets. There are two--one with a SYN flag and one with a SYN, ACK flag:
+
+![image](https://github.com/user-attachments/assets/6fd6fdeb-0ccf-4b3d-9f0e-82ec96570e69)
+
 **[Task 7, Question 1] What is the number of packets with SYN bytes?** - 2
 
+Packets that were sent to the IP address `10.10.10.10` should have the string `-> 10.10.10.10` in them somewhere. Look for this string and keep track of how many times it shows up -- it should be seven.
+
+![image](https://github.com/user-attachments/assets/9601ee8d-59f9-473e-88d5-229d0addf6b8)
+
 **[Task 7, Question 2] What is the number of packets sent to the IP address `10.10.10.10`?** - 7
+
+Similar to the above questions, we can just count how many packets have an ACK in brackets somewhere. Looking through, we see eight such packets.
 
 **[Task 7, Question 3] What is the number of packets with ACK bytes?** - 8
 
@@ -135,10 +177,26 @@ Wireshark's display filter syntax is used, and you can use its built-in Display 
 
 Remember that when you filter, you can use `nl` to get a numbered list of your output. Simply pipe the tshark output to `nl` to do so.
 
+Now we'll start making use of tshark like Wireshark. First, since we want to find the given IP address, we should run the command `tshark -r demo.pcapng -Y 'ip.addr==65.208.228.223'`. You can pipe this either to `nl` or `wc -l` to figure out how many such packets there are.
+
+![image](https://github.com/user-attachments/assets/6eefb171-4847-4eb0-9de7-07ddb2709582)
+
 **[Task 8, Question 1] What is the number of packets with a `65.208.228.223` IP address?** - 34
+
+For this, we'll want to run `tshark -r demo.pcapng -Y 'tcp.port==3371'`.
+
+![image](https://github.com/user-attachments/assets/bd6eb898-4504-4eca-a17b-17c5fed852f5)
 
 **[Task 8, Question 2] What is the number of packets with a TCP port 3371?** - 7
 
+And now we'll wanmt to find the number of packets that have `145.254.160.237` as a source. We can use the command `tshark -r demo.pcapng -Y 'ip.src==145.254.160.237` to get the answer. For this question specifically I piped the output to `nl`.
+
+![image](https://github.com/user-attachments/assets/1c6a1ee8-e519-4526-b5eb-31227ae35395)
+
 **[Task 8, Question 3] What is the number of packets with a `145.254.160.237` IP address as a source address?** - 20
+
+Now we need to look for a duplicate TCP packet. Fortunately, tshark will annotate these packets as such -- noting them as [TCP Dup...]. So we can just pipe our output above to `grep "TCP Dup"` or something similar to obtain the packet number (which is the _second_ number in the line. The first number comes from `nl`):
+
+![image](https://github.com/user-attachments/assets/20123f76-bdbf-4b98-b0ac-82c59105f83f)
 
 **[Task 8, Question 4] Rerun the previous query and look at the output. What is the packet number of the "duplicate" packet?** - 37
