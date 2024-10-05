@@ -162,7 +162,7 @@ Lucene is used if you want to opt out of KQL, which you might do if you want to 
 - For open ranges, use wildcards, e.g. `status:[400 TO *]`.
 - You can use the logical operators and parentheses described above for more complex queries.
 - To use regular expressions, wrap them with forward slashes, e.g. `/(REGEX)/`.
-- To use fuzzy searching, add `~` to the end of a word. Fuzzy searching uses edit distances of 2, which means it'll look for terms that can be achieved by making two changes at most (insertion, deletion, substitution, transposition of characters), though you can use an edit distance of 1 to catch most human misspellings. To use an edit distance of 1, add `~1` to the end of a word.
+- To use fuzzy searching, add `~` to the end of a word. Fuzzy searching uses edit distances of 2, which means it'll look for terms that can be found by making two changes at most (insertion, deletion, substitution, transposition of characters), though you can use an edit distance of 1 to catch most human misspellings. To use an edit distance of 1, add `~1` to the end of a word.
 - You cannot combine fuzzy searching and wildcards.
 
 ## [Task 7] Creating Visualizations
