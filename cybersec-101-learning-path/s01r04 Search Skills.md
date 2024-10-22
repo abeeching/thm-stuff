@@ -40,6 +40,8 @@ The body text states that "[u]nlike the older netstat command, ss is faster and 
 
 **[Task 2, Question 2] What is the name of the command replacing `netstat` in Linux systems?** - `ss`
 
+### On AI Features in Search Engines
+
 It's worth making clear that if you have access to AI summaries of results, you should avoid solely relying on them. They may well point you in the right direction, but AI is known to be prone to "hallucinations" (read: generating factually incorrect information) and so they may get things wrong. When in doubt you should always double-check what you're searching for to make sure you're on the right track.
 
 ## [Task 3] Search Engines
