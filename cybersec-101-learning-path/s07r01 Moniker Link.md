@@ -77,3 +77,5 @@ You cannot reconfigure Outlook to prevent this attack, and prohibiting the use o
 ## [Task 6] Conclusion
 
 This is an interesting little vulnerability to whet one's appetite for the upcoming exploitation section. This is a vulnerability that can be used to do some serious damage, and the fact that it is easy to exploit and can be exploited against a wide suite of products just makes it that more interesting as a case study. Not only that, but it serves as a reminder to keep products up-to-date -- in fact, that's really about all you can do here, since Outlook can't be reconfigured to prevent this attack without just updating it.
+
+(Note: The Metasploit rooms are also a part of the Junior Pentester Path, so notes for them will be continued there. Will link to them later.)
