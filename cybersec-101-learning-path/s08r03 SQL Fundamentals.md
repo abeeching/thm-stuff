@@ -83,9 +83,17 @@ ADD page_count INT; -- creates a new column for the page count
 
 - `DROP TABLE (table_name);` - removes the table
 
-**[Task 4, Question 1] Using the statement you've learned to list all databases, it should reveal a database with a flag for a name; what is it?**
+When we run `SHOW DATABASES;` in the VM, we see these:
 
-**[Task 4, Question 2] In the list of available adtabases, you should also see the `task_4_db` database. Set this as your active database and list all tables in this database; what is the flag present here?**
+![image](https://github.com/user-attachments/assets/fc5a8b1e-d78b-4f4e-8ab2-05376d11d227)
+
+**[Task 4, Question 1] Using the statement you've learned to list all databases, it should reveal a database with a flag for a name; what is it?** - `THM{575a947132312f97b30ee5aeebba629b723d30f9}`
+
+From here, we may run `use task_4_db;` to switch to the database for Task 4, and then run `SHOW TABLES;` to see a list of all the tables that we have in there.
+
+![image](https://github.com/user-attachments/assets/57bcec4e-c60c-475c-8332-b09a99b9e059)
+
+**[Task 4, Question 2] In the list of available adtabases, you should also see the `task_4_db` database. Set this as your active database and list all tables in this database; what is the flag present here?** - `THM{692aa7eaec2a2a827f4d1a8bed1f90e5e49d2410}`
 
 ## [Task 5] CRUD Operations
 
@@ -109,9 +117,25 @@ In brief:
 - The UPDATE statement is used to update/modify records.
 - The DELETE statement is used to delete/remove records.
 
-**[Task 5, Question 1] Using the `tools_db` database, what is the name of the tool in the `hacking_tools` table that can be used to perform man-in-the-middle attacks on wireless networks?**
+Now let's `use tools_db;`. Once we run this command, we'll want to check the data in `hacking_tools`. We can start by figuring out what's in this table - just run `DESCRIBE hacking_tools;`.
 
-**[Task 5, Question 2] Using the `tools_db` database, what is the shared category for both USB Rubber Ducky and Bash Bunny?**
+![image](https://github.com/user-attachments/assets/e9bdcaa3-49aa-4d7c-9e0b-237085193da9)
+
+So now we know what we'd like to find. We could start by running `SELECT name, description FROM hacking_tools;` and seeing what comes up.
+
+![image](https://github.com/user-attachments/assets/318fa34b-1539-469c-87b8-abf1ac633c81)
+
+The tool we're looking for is Wi-Fi Pineapple.
+
+**[Task 5, Question 1] Using the `tools_db` database, what is the name of the tool in the `hacking_tools` table that can be used to perform man-in-the-middle attacks on wireless networks?** - Wi-Fi Pineapple
+
+To get the categories, we run `SELECT name, category FROM hacking_tools;`.
+
+![image](https://github.com/user-attachments/assets/35d90324-1394-4abe-8763-add28d126253)
+
+It appears the USB Rubber Ducky and Bash Bunny are both under the USB Attacks category.
+
+**[Task 5, Question 2] Using the `tools_db` database, what is the shared category for both USB Rubber Ducky and Bash Bunny?** - USB attacks
 
 ## [Task 6] Clauses
 
@@ -123,11 +147,25 @@ Here are some other clauses:
 - `ORDER BY` is used to sort records returned by a query into ascending (ASC) or descending (DESC) order. Example: `SELECT * FROM books ORDER BY published_date ASC;` returns all records in ascending order.
 - `HAVING` is used with other clauses to filter groups or results of records based on conditions. In the case of `GROUP BY`, it evaluates the condition to TRUE or FALSE. Example: `SELECT name, COUNT(*) FROM books GROUP BY name HAVING name LIKE '%Hack%';` returns books with names that contain "Hack" and the proper count.
 
-**[Task 6, Question 1] Using the `tools_db` database, what is the total number of distinct categories in the `hacking_tools` table?** - 
+Now let's get the distinct categories in `hacking_tools`. To do this we run `SELECT DISTINCT category FROM hacking_tools;`.
 
-**[Task 6, Question 2] Using the `tools_db` database, what is the first tool (by name) in ascending order from the `hacking_tools` table?**
+![image](https://github.com/user-attachments/assets/133ae524-005c-46c3-9737-a4998ec7d415)
 
-**[Task 6, Question 3] Using the `tools_db` database, what is the first tool (by name) in descending order from the `hacking_tools` table?**
+We see there are six rows, so that's how many distinct categories there are.
+
+**[Task 6, Question 1] Using the `tools_db` database, what is the total number of distinct categories in the `hacking_tools` table?** - 6
+
+We can run `SELECT * FROM hacking_tools ORDER BY name ASC;` to get the names in ascending order. We could also specify `name` in the SELECT part of the statement so it only has the information we care about:
+
+![image](https://github.com/user-attachments/assets/0d3d059d-759d-40fd-9c7e-cf8b85e22a3b)
+
+**[Task 6, Question 2] Using the `tools_db` database, what is the first tool (by name) in ascending order from the `hacking_tools` table?** - Bash Bunny
+
+And we may as well show off the `DESC` keyword. You could've answered this by looking at the _last_ name in the list above, though!
+
+![image](https://github.com/user-attachments/assets/e55e5fd5-09fa-4e79-8e4a-73e286361661)
+
+**[Task 6, Question 3] Using the `tools_db` database, what is the first tool (by name) in descending order from the `hacking_tools` table?** - Wi-Fi Pineapple
 
 ## [Task 7] Operators
 
@@ -144,12 +182,24 @@ We use operators in SQL to deal with logic, comparisons, and effective filtering
   - `<` (less than): Checks if one expression has a value less than another one. Can even work with dates.
   - `>` (greater than): Checks if one expression has a value greater than another one.
   - `<=` (less than or equal to) and `>=` (greater than or equal to) combines the comparison and equality operators. When used with dates, it can be used to return values on a specific date, as well as those before/after.
+
+Now let's make use of these operators. For this question, we know the _category_ will be `Multi-tool`, so we can include `WHERE category = 'Multi-tool'` in our statement. We also know that the description mentions it'll be useful for `pentesters` and `geeks`, so we can also write `AND description LIKE '%geek%'`. One query might be `SELECT name, description FROM hacking_tools WHERE category = 'Multi-tool' AND description LIKE '%geek%';`.
+
+![image](https://github.com/user-attachments/assets/c85b9411-6d59-4b54-8b00-411169be933e)
  
-**[Task 7, Question 1] Using the `tools_db` database, which tool falls under the `Multi-tool` category and is useful for `pentesters` and `geeks`?**
+**[Task 7, Question 1] Using the `tools_db` database, which tool falls under the `Multi-tool` category and is useful for `pentesters` and `geeks`?** - Flipper Zero
 
-**[Task 7, Question 2] Using the `tools_db` database, what is the category of tools with an amount greater than or equal to `300`?**
+For this question, we're looking for categories where the amount >= 300. So one query might be `SELECT category FROM hacking_tools WHERE amount >= 300;`.
 
-**[Task 7, Question 3] Using the `tools_db` database, which tool falls under the `Network intelligence` category with an amount less than `100`?**
+![image](https://github.com/user-attachments/assets/2976a589-0712-4cc0-aabc-a4bc8b7a2aab)
+
+**[Task 7, Question 2] Using the `tools_db` database, what is the category of tools with an amount greater than or equal to `300`?** - RFID cloning
+
+And for this last one, we're looking for a Network Intelligence tool where the amount is less than 100. In this case, we'll run `SELECT name FROM hacking_tools WHERE category = 'Network intelligence' AND amount < 100;`.
+
+![image](https://github.com/user-attachments/assets/98233da8-c015-4184-abb9-5f7b577016ad)
+
+**[Task 7, Question 3] Using the `tools_db` database, which tool falls under the `Network intelligence` category with an amount less than `100`?** - Lan Turtle
 
 ## [Task 8] Functions
 
@@ -164,12 +214,24 @@ Lastly, we have functions in SQL that allow us to streamline queries and manipul
   - `SUM(column)` sums all non-NULL values of a determined column.
   - `MAX(column)` calculates the maximum value in a given column.
   - `MIN(column)` calculates the minimum value in a given column.
+
+For this question, we'll get the names by using the `LENGTH()` function. In this case, we might run the query `SELECT name, LENGTH(name) FROM hacking_tools ORDER BY LENGTH(name) DESC;`.
+
+![image](https://github.com/user-attachments/assets/92cf0824-20ec-4454-95b1-81d804b865b7)
  
-**[Task 8, Question 1] Using the `tools_db` database, what is the tool with the longest name based on character length?**
+**[Task 8, Question 1] Using the `tools_db` database, what is the tool with the longest name based on character length?** - USB Rubber Ducky
 
-**[Task 8, Question 2] Using the `tools_db` database, what is the total sum of all tools?**
+I assume this refers to the amount of tools. In this case, we'd run `SELECT SUM(amount) FROM hacking_tools;` to get the total sum of tools.
 
-**[Task 8, Question 3] Using the `tools_db` database, what are the tool names where the amount does not end in `0`, and group the tool names concatenated by `&`.**
+![image](https://github.com/user-attachments/assets/b7df593e-69bb-42a5-a6fa-589cf2dc0819)
+
+**[Task 8, Question 2] Using the `tools_db` database, what is the total sum of all tools?** - 1444
+
+This question is a little specific, but here goes! We want the amounts that don't end in 0, so we'll need to include `WHERE amount NOT LIKE '%0'` - this excludes any entries where the amount _does_ end in 0. The question suggests we should use GROUP_CONCAT() with the & operator as a separator, so let's set up the query: `SELECT GROUP_CONCAT(name SEPARATOR " & ") AS tools FROM hacking_tools WHERE amount NOT LIKE '%0';`.
+
+![image](https://github.com/user-attachments/assets/bc194cee-be32-4426-acb3-b193fb70bd06)
+
+**[Task 8, Question 3] Using the `tools_db` database, what are the tool names where the amount does not end in `0`, and group the tool names concatenated by `&`.** - Flipper Zero & iCopy-XS
 
 ## [Task 9] Conclusion
 
