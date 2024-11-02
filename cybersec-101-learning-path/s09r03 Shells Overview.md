@@ -162,8 +162,29 @@ Now let's grab some flags! We can use our knowledge of the different types of re
 
 We can access the above via the AttackBox or a machine of ours connected into the VPN.
 
-**[Task 8, Question 1] Using a reverse or bind shell, exploit the command injection vulnerability to get a shell. What is the content of the flag saved in the `/` directory?**
+For the first exercise, we'll need to use command injection. This just means we can run commands on the system when we really shouldn't. The `8081` URL is the target this time. You can tinker around with the different payloads described above, but I pasted the PHP shell_exec() reverse shell. You need to replace the IP and port with the ones that you want to use, and in this particular case, you need to enclose the command in semicolons.
 
-**[Task 8, Question 2] Using a web shell, exploit the unrestricted file upload vulnerability and get a shell. What is the content of the flag saved in the `/` directory?**
+![image](https://github.com/user-attachments/assets/aab31056-4e7d-4aad-9019-2646260ba615)
+
+We can use all the usual commands, like `ls` and `cat`. Doing so reveals the `/flag.txt` file, and `cat`-ing it gives us the first flag.
+
+![image](https://github.com/user-attachments/assets/28b2db27-8be0-4e61-9ae6-7ae32e56fa92)
+
+**[Task 8, Question 1] Using a reverse or bind shell, exploit the command injection vulnerability to get a shell. What is the content of the flag saved in the `/` directory?** - `THM{0f28b3e1b00becf15d01a1151baf10fd713bc625}`
+
+For this next question, we can go to the `8082` URL and attempt to upload a file to the system. We can use the shells described in the previous task to do the job. We'll grab the `p0wny-shell` shell (since it's just one file) and save it as `shell.php` - you can find it on GitHub. Once we save it, we can upload it to the website:
+
+![image](https://github.com/user-attachments/assets/e2c44792-5d1e-4156-9a51-c6ddf8331d9f)
+
+...and for some reason, this is totally OK with the web app that's expecting a CV document. Either way, we can go to `MACHINE_IP:8082/uploads/shell.php` - as called out by the hint - and we'll be able to interact with the web shell. As before, our flag is in `/flag.txt`:
+
+![image](https://github.com/user-attachments/assets/1e9c1c55-7b43-4edc-a80f-80c21db5f5a1)
+
+**[Task 8, Question 2] Using a web shell, exploit the unrestricted file upload vulnerability and get a shell. What is the content of the flag saved in the `/` directory?** - `THM{202bb14ed12120b31300cfbbbdd35998786b44e5}`
 
 ## [Task 9] Conclusion
+
+In this room, we learned about the different kinds of shells, how they're important for attackers, pentesters, and defenders, and how we can identify them. In short:
+- Reverse shells send a connection from a compromised machine back to the attacker.
+- Bind shells listen for incoming connections on a compromised machine.
+- Web shells let attackers exploit vulnerabilities in web apps.
