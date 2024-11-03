@@ -1,5 +1,7 @@
 # Defensive Security Intro
 
+*Also in: Cyber Security 101 - section 10, room 1*
+
 ## [Task 1] Introduction to Defensive Security
 
 Previously, we learned about offensive security, which is focused no identifying and exploiting system vulnerabilities to enhance security. Offensive security folks - namely red teamers and penetration testers - focus on exploiting software bugs, insecure setups/configuration, and poor access control (among other things) and report their results so folks can come in to fix them.
