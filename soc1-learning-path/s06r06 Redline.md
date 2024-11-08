@@ -22,6 +22,8 @@ We'll start by looking at Redline's data collection page. You have three ways to
 2. Comprehensive Collector: This configures the script to gather the most data from the host for further analysis. This can take up to an hour or more, and is good if you want a full analysis of the system.
 3. IOC Search Collector: This collects data that matches indicators of compromise (IOCs) that you create with teh IOC Editor. This is good if you already have known IOCs that you have gathered via threat intelligence, incident response, and/or malware analysis.
 
+(Note that the room suggests you create the analysis file. This will take too long and potentially fill up the entire disk space on the attached VM. For Task 4, we'll be using the file that was already created.)
+
 For this room, we will launch Redline from the taskbar and create a Standard Collector. We'll choose Windows as our target platform, and then under "Review Script Configuration" we will select "Edit your script." This allows us to choose what kind of data we want to collect from the host.
 - Memory: We can choose to collect memory data, including process listing, driver enumeration for Windows hosts, and hook detection for Windows hosts prior to Windows 10. In this room we will want to leave Hook Detection and Acquire Memory Image unchecked.
 - Disk: We can choose to collect data on disk partitions and volumes, along with enumerating files.
@@ -75,21 +77,55 @@ The Timeline helps you understand when the compromised happened and what steps a
 
 ## [Task 4] Standard Collector Analysis
 
-Now we will analyze the analysis file we created back in Task 2. We want to see what the intruder put on the system for us.
+Now we will analyze the analysis file located in `C:\Users\Administrator\Documents\Analysis\Sessions\AnalysisSession1`. We want to see what the intruder put on the system for us. Double click the analysis session file, and after a little bit of time, Redline will open.
+
+For the operating system, we'll want to check System Information and the Operating System Information sub-section:
+
+![image](https://github.com/user-attachments/assets/5e02dff2-c2d4-4770-bfa0-3d5c504c093b)
 
 **[Task 4, Question 1] Provide the Operating System detected for the workstation.** - Windows Server 2019 Standard 17763
 
+The Tasks section gives us a list of all scheduled tasks created on the system. We'll need to scroll through it to find the suspicious one. I'd say "Microsoft Office Update Fake" is a pretty suspicious name for a scheduled task.
+
+![image](https://github.com/user-attachments/assets/ee12514f-0e81-4f87-927f-da2435b1b625)
+
 **[Task 4, Question 2] What is the suspicious scheduled task that got created on the victim's computer?** - MSOfficeUpdateFa.ke
+
+The message in this case is the comment associated with the task.
 
 **[Task 4, Question 3] Find the message that the intruder left for you in the task.** - `THM-p3R5IStENCe-m3Chani$m`
 
-**[Task 4, Question 4] There is a new System Event ID created by an intruder wit the source name "THM-Redline-User" and the Type "ERROR". Find the Event ID #.** - 546
+Next, we can check the Event Logs. In Redline, we have the ability to create filters - we just click the little filter icons beneath the column names to apply a filter for that column.
+
+![image](https://github.com/user-attachments/assets/133787c0-1533-4a09-ac86-13efb4ba0c07)
+
+In this case, filtering for "Error" types and for sources that contain "THM", we get this event ID.
+
+![image](https://github.com/user-attachments/assets/72756f61-b9cb-4d5e-96ef-b5b5df7f1a12)
+
+**[Task 4, Question 4] There is a new System Event ID created by an intruder with the source name "THM-Redline-User" and the Type "ERROR". Find the Event ID #.** - 546
+
+The message for this event is as follows:
+
+![image](https://github.com/user-attachments/assets/fe303638-486e-4313-9243-a6c9e0c45769)
 
 **[Task 4, Question 5] Provide the message for the Event ID.** - Someone cracked my password. Now I need to rename my puppy-++-
 
-**[Task 4, Question 6] It loosk like the intruder downloaded a file containing the flag for Question 8. Provide the full URL of the website.** - `https[://]wormhole[.]app/download-stream/gI9vQtChjyYAmZ8Ody0AuA` (remove brackets)
+Now let's take a look at what files were downloaded. Redline provides the File Download History, and we can see where people downloaded files from, what files were downloaded, and where they were placed. It turns out this URL has our flag here. You'll have to scroll the table to the right to confirm this:
+
+![image](https://github.com/user-attachments/assets/2b5a0e13-d380-4686-ab96-b36797431194)
+
+**[Task 4, Question 6] It loosk like the intruder downloaded a file containing the flag for Question 8. Provide the full URL of the website.** - `https://wormhole.app/download-stream/gI9vQtChjyYAmZ8Ody0AuA`
+
+The flag's location is found in the Target Directory and File Name columns:
+
+![image](https://github.com/user-attachments/assets/2552d8cf-3091-4cb9-a0d7-1619b5cf5433)
 
 **[Task 4, Question 7] Provide the full path to where the file was downloaded to including the filename.** - `C:\Program Files (x86)\Windows Mail\SomeMailFolder\flag.txt`
+
+Since this file is on the attached VM, we can just navigate to the directory above and open the text file. Doing so yields the following:
+
+![image](https://github.com/user-attachments/assets/4160830f-75e7-4d06-99d7-facd690abb70)
 
 **[Task 4, Question 8] Provide the message the intruder left for you in the file.** - `THM{600D-C@7cH-My-FR1EnD}`
 
@@ -129,13 +165,19 @@ We may need to select different settings in different investigations. When done 
 
 Once the report is genreated, you should see a list of hits - these are things that Redline has detected based on the IOC search. You may see false positives (e.g., `chrome.dll` which only matches one of the File Strings in our IOC file). Note that the more granular and accurate your IOC file is, the less false positive results you (should) get. Look around for files with a lot of hits, and you'll find what you're looking for.
 
+All of the questions below can be answered with the contents of the task itself, followed by the screenshots therein.
+
 **[Task 5, Question 1] What is the actual filename of the Keylogger?** - `psylog.exe`
+
+The next several questions can be answered by looking at the IOC Report screenshot in the task.
 
 **[Task 5, Question 2] What filename is the file masquerading as?** - `THM1768.exe`
 
 **[Task 5, Question 3] Who is the owner of the file?** - `WIN-2DET5DP0NPT\charles`
 
 **[Task 5, Question 4] What is the file size in bytes?** - 35400
+
+Note that the name of the IOC file is given in the Start Your Analysis Session screenshot in the task. The final location of this file will be found in the IOC Report. In the folder that the IOC search results are saved to - that is, `C:\Users\charles\Desktop\Keylogger-IOCSearch\` - IOC files will be stored in an `IOCs` sub-folder.
 
 **[Task 5, Question 5] Provide the full path of where the `.ioc` file was placed after the Redline analysis, include the `.ioc` filename as well** - `C:\Users\charles\Desktop\Keylogger-IOCSearch\IOCs\keylogger.ioc`
 
@@ -146,19 +188,53 @@ Here we will put this to practice in another mini-scenario. Here we have a poten
 - File String: `<?<L<T<g=`
 - File Size (Bytes): 834936
 
-Note that we can make use of the Previous Analysis option in Redline - there is an analysis file we can look at in `C:\Users\Administrator\Documents\Analysis\Sessions\AnalysisSession1`.
+Note that we can make use of the Previous Analysis option in Redline - there is an analysis file we can look at in `C:\Users\Administrator\Documents\Analysis\Sessions\AnalysisSession1`. This is the same as the file we investigated in Task 4. We will need to create the IOC using the information provided in this task:
+
+![image](https://github.com/user-attachments/assets/09699057-10c6-4daa-8570-cb4f740c0e9d)
+
+To actually have this return anything, we'll want to open up that analysis file now. Instead of creating a new IOC Collector, we can actually create a new IOC Report by going to the bottom-left, selecting IOC Reports, then selecting Create a New IOC Report:
+
+![image](https://github.com/user-attachments/assets/c60e5137-6502-4f04-acb3-79fe0f3006c3)
+
+We point Redline to the folder where we created the IOC file, select the IOC we want to look for in Redline, and then let it do its thing. This should give us one executable file on the machine. We can click the blue "I" button (the information button) to pull up detailed information about the file, including where it is:
+
+![image](https://github.com/user-attachments/assets/ccf74e59-c0ca-449c-801b-de8e245a16ef)
 
 **[Task 6, Question 1] Provide the path of the file that matched all the artifacts along with the filename.** - `C:\Users\Administrator\AppData\Local\Temp\8eJv8w2id6IqN85dfC.exe`
 
 **[Task 6, Question 2] Provide the path where the file is located without including the filename.** - `C:\Users\Administrator\AppData\Local\Temp\`
 
+The owner of the file can be found in the file information as well:
+
+![image](https://github.com/user-attachments/assets/128fd210-7f87-472a-a9e6-15ed253b6637)
+
 **[Task 6, Question 3] Who is the owner of the file?** - `BUILTIN\Administrators`
+
+...Along with the subsystem:
+
+![image](https://github.com/user-attachments/assets/1327036b-ee51-44ee-9436-03121979f660)
 
 **[Task 6, Question 4] Provide the subsystem for the file.** - Windows_CUI
 
+The device path is located near the top of the file information:
+
+![image](https://github.com/user-attachments/assets/d49f243f-c0d1-4b10-a0f1-44dbceedca46)
+
 **[Task 6, Question 5] Provide the Device Path where the file is located.** - `\Device\HarddiskVolume2`
 
+And the MD5 hash can be found in the IOC Report:
+
+![image](https://github.com/user-attachments/assets/16f26cc3-053e-4afa-b86d-b6a6eee08f32)
+
+This _isn't_ the SHA-256 hash, to be fair. We can put this MD5 hash into VirusTotal and get the SHA-256 hash by looking at its summary:
+
+![image](https://github.com/user-attachments/assets/fb980103-8047-4847-9090-0cae18ed9b66)
+
 **[Task 6, Question 6] Provide the hash (SHA-256) for the file.** - 57492d33b7c0755bb411b22d2dfdfdf088cbbfcd010e30dd8d425d5fe66adff4
+
+Judging by the output of VirusTotal - particularly the name above and the information given in the Details tab - we can conclude that this is PsExec.
+
+![image](https://github.com/user-attachments/assets/c451e4cd-66f5-4bce-8053-1e7c8e7552d6)
 
 **[Task 6, Question 7] The attacker managed to masquerade the real filename. Can you find it having the hash in your arsenal?** - `PsExec.exe`
 
@@ -166,16 +242,44 @@ Note that we can make use of the Previous Analysis option in Redline - there is 
 
 And for our last task in this room, we will run through a culminating scenario. Here a senior accountant is complaining that he cannot access some spreadsheets and other files he was working on. There's also something on his wallpaper suggesting his files got encrypted. Sounds like ransomware to me! We'll need to use Redline to investigate this. All the data is available on the VM - it can be found in the Endpoint Investigation folder on the Desktop. The analysis session there can be opened in Redline.
 
+Checking the System Information -> Operating System Information, we see that the OS is Windows 7 Home Basic:
+
+![image](https://github.com/user-attachments/assets/e6ba32f3-6b34-411d-9b63-80e2bef48574)
+
 **[Task 7, Question 1] Can you identify the product name of the machine?** - Windows 7 Home Basic
+
+If someone's leaving notes around on the Desktop, it's likely that they're using `notepad.exe` to do so. We can check the Processes tab and look for any processes that have `NOTEPAD.EXE` in them. There's only one result in the Process tab if we search for `notepad.exe`, and the arguments used to launch it tell us the name of the text file left on the Desktop:
+
+![image](https://github.com/user-attachments/assets/58db6553-5adc-40f8-97d7-f5a8169305c4)
 
 **[Task 7, Question 2] Can you find the name of the note left on the Desktop for "Charles"?** - `_R_E_A_D___T_H_I_S___AJYG1O_.txt`
 
+Now let's look for the Windows Defender service. It's probably going to be in the Windows Services tab. We can, of course, just search for `defender`. Doing so yields one result, `WinDefend`, which has this as its DLL:
+
+![image](https://github.com/user-attachments/assets/ff7a3fde-e00e-401c-b1f4-4dd5e0f1017d)
+
 **[Task 7, Question 3] Find the Windows Defender service; what is the name of its service DLL?** - `MpSvc.dll`
+
+We're told that the user downloaded a ZIP file from the web manually, so our next stop is the File Download History. We can search for `.zip` in this table. The file comes from `bazaar.abuse.ch`, or the MalwareBazaar, where malware samples are exchanged. The file in question is:
+
+![image](https://github.com/user-attachments/assets/9c31e62f-4153-47ef-8195-5cddc9cde264)
 
 **[Task 7, Question 4] The user manually downloaded a zip file from the web. Can you find the filename?** - `eb5489216d4361f9e3650e6a6332f7ee21b0bc9f3f3a4018c69733949be1d481.zip`
 
+Let's see what else got dropped on the user's Desktop. We can look at the File System tab, and filter for `C:\Users\charles\Desktop`. This will also filter the sub-folder `Endermanch@Cerber5.bin`. We see one executable that looks pretty malicious in this list:
+
+![image](https://github.com/user-attachments/assets/090a5d70-cfe9-476e-8a83-4bdb0b8585e3)
+
 **[Task 7, Question 5] Provide the filename of the malicious executable that got dropped on the user's Desktop.** - `Endermanch@Cerber5.exe`
 
+Its MD5 hash can be found by scrolling over to the right. The hash highlighted in blue is the one we're looking for:
+
+![image](https://github.com/user-attachments/assets/82c80b12-b9dc-4072-8943-01e85266cb00)
+
 **[Task 7, Question 6] Provide the MD5 hash for the dropped malicious executable.** - fe1bc60a95b2c2d77cd5d232296a7fa4
+
+If we check VirusTotal's detections and details for the file with the MD5 hash above, we see a lot of references to "Cerber." Turns out that the adversary didn't really hide the name all that much!
+
+![image](https://github.com/user-attachments/assets/05d1f2ae-26a4-4fae-aeb0-5bc49a66cd28)
 
 **[Task 7, Question 7] What is the name of the ransomware?** - Cerber
