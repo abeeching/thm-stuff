@@ -96,13 +96,29 @@ Lastly, the FLARE Obfuscated String Solver (FLOSS) allows you to extract and deo
 
 **[Task 3, Question 5] Which tool can be used for static analysis or studying executable file properties without running the files?** - PEStudio
 
+For the next two questions, we'll open `cryptominer.bin` in PEStudio. Open the program (found on the desktop), then go to File -> Open File, and open the crypto miner. It'll take some time to load everything. The hashes for this program are as follows:
+
+![image](https://github.com/user-attachments/assets/c0c4099e-592d-4fb6-9489-99acfb082762)
+
 **[Task 3, Question 6] Using the tool PEStudio to open the file `cryptominer.bin` in the `Desktop\Sample` folder, what is the sha256 value of the file?** - `E9627EBAAC562067759681DCEBA8DDE8D83B1D813AF8181948C549E342F67C0E`
+
+This will take some time too - after waiting, you should see the total number of functions in the left pane. There are 102.
+
+![image](https://github.com/user-attachments/assets/29715fcb-e8d7-4f24-b24f-36ceb28330f7)
 
 **[Task 3, Question 7] Using the tool PEStudio to open the file `cryptominer.bin` in the `Desktop\Sample` folder, how many functions does it have?** - 102
 
 **[Task 3, Question 8] What tool can generate file hashes for integrity verification, authenticate the source of system files, and validate their validity?** - CFF Explorer
 
+For these next two questions, we'll open `possible_medusa.txt` in CFF Explorer. The program is on the desktop, and you can load the text file in with File -> Open File. The hashes are as follows:
+
+![image](https://github.com/user-attachments/assets/f115a041-16fa-436c-9258-a50c22928113)
+
 **[Task 3, Question 9] Using the tool CFF Explorer to open the file `possible_medusa.txt` in the `Desktop\Sample` folder, what is the MD5 of the file?** - `646698572AFBBF24F50EC5681FEB2DB7`
+
+If we go into the DOS Header section, we can see various values, including the `e_magic` value:
+
+![image](https://github.com/user-attachments/assets/c2817570-0416-4d2d-8c59-5d1e3944c56d)
 
 **[Task 3, Question 10] Use the CFF Explorer tool to open the file `possible_medusa.txt` in the `Desktop\Sample` folder. Then, go to the DOS Header Section. What is the `e_magic` value of the file?** - 5A4D
 
@@ -132,22 +148,48 @@ We should verify our results with Process Monitor. We can open it, and then clic
 5. Click Add, then click Apply.
 6. The conditions should be applied, and Process Monitor will show us all communications involving the `cobaltstrike.exe` file - it does indeed reach out to the IP discussed above.
 
+We can investigate the different files on this machine with the tools in FLARE. We'll start with `windows.exe`. Note that some of these questions may be answered with the information provided in the task's screenshots and the information in the room. I'll point these out when we get there. Incidentally, this first question can be answered by checking the first PEStudio screenshot in this task.
+
+![image](https://github.com/user-attachments/assets/36bc50b0-5ab6-4d78-b69d-c1c50a1101b8)
+
 **[Task 4, Question 1] Using PEStudio, open the file `windows.exe`. What is the entropy value of the file `windows.exe`?** - 7.999
 
+However, we'll want to actually load the file into (and check the output of) PEStudio for this next one. Going to the "manifest (administrator)" section in the program gives us the following XML information:
+
+![image](https://github.com/user-attachments/assets/3f9c0b03-062d-49c6-8712-94f2cb2a4e0d)
+
+The `requestedExecutionLevel` tag, towards the bottom, is what we're looking for. Its level is `requireAdministrator`.
+
 **[Task 4, Question 2] Using PEStudio, open the file `windows.exe`, then go to manifest (administrator) section. What is the value under `requestedExecutionLevel`?** - `requireAdministrator`
+
+The answers for the next two questions can be found with the information provided in the task.
 
 **[Task 4, Question 3] Which function allows the process to use the operating system's shell to execute other processes?** - `set_UseShellEncode`
 
 **[Task 4, Question 4] Which API starts with R and indicates that the executable uses cryptographic functions?** - RijndaelManaged
 
+For this question, we'll want to put `cobaltstrike.exe` into PEStudio. The imphash is the last hash (underlined, in blue) in the output:
+
+![image](https://github.com/user-attachments/assets/00b718e0-46ed-411b-86d3-f0d9eccbfb73)
+
 **[Task 4, Question 5] What is the Imphash of `cobaltstrike.exe`?** - `92EEF189FB188C541CBD83AC8BA4ACF5`
+
+The IP address is given in the screenshots/task itself. When we say _defang_, we are basically changing an IP address or a URL in such a way that we can't accidentally click on it and expose our machine to threats. CyberChef has a series of operations useful for defanging IP addresses, URLs, and more.
 
 **[Task 4, Question 6] What is the defanged IP address to which the process `cobaltstrike.exe` is connecting?** - `47[.]120[.]46[.]210`
 
+In order to answer this question, we'll want to look at `cobaltstrike_capture.pcapng`, located in `Desktop\Sample`. Double-clicking this opens it in Wireshark, and we'll have to filter for the contacted IP address. To do so, we can click the "Apply a display filter" bar at the top, and then type `ip.addr == 47.120.46.210`. Applying the filter, we can get information on the involved ports by checking the packet list at the top, or by looking at the contents of the first packet at the bottom-left:
+
+![image](https://github.com/user-attachments/assets/125c6d4e-75da-4a99-a5c1-1651b44922cf)
+
+It attempts to use port 81 as the destination port.
+
 **[Task 4, Question 7] What is the destination port number used by `cobaltstrike.exe` when connecting to its C2 IP address?** - 81
+
+This final question can be answered with the information provided in the task.
 
 **[Task 4, Question 8] During our analysis, we found a process called `cobaltstrike.exe`. What is the parent process of `cobaltstrike.exe`?** - `explorer.exe`
 
 ## [Task 5] Conclusion
 
-And that's the basics of FLARE. This is a complete and customized environment for incident response, malware reverse engineering, and forensic analysis.
+And that's the basics of FLARE. This is a complete and customized environment for incident response, malware reverse engineering, and forensic analysis. There are a wide variety of tools, with some being common choices to perform certain investigative tasks, such as PEStudio, CFF Explorer, Process Monitor, and Process Explorer.
