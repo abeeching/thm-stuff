@@ -143,8 +143,153 @@ CAR just so happens to provide unit tests, which allow you to see how this analy
 
 ## [Task 5] MITRE Engage
 
+Proceeding, we have MITRE Engage, which allows you to plan and discuss adversary engagement operations. It focuses on engaging the adversary directly via cyber _denial_ (preventing the ability to conduct operations) and cyber _deception_ (intentionally misleading the adversary). The website for Engage provides a starter kit for this approach, including whitepapers and documents explaining methodologies and processes, along with checklists. Engage has its own matrix with actions placed into various categories:
+- Prepare: Actions that can be taken to plan for adversary engagement
+- Expose: Actions that are taken when an adversary triggers deception activities
+- Affect: Actions that impair the ability of adversaries to carry out operations
+- Elicit: Actions that allow one to observe an adversary and learn about their TTPs
+- Understand: Actions that allow for analysis of the adversary and the actions taken
+
+More information can be found with the Engage Handbook. The Engage Matrix Explorer allows you to directly interact with the matrix, and you can filter for information from ATT&CK directly. By default, the matrix focuses on the _Operate_ phase of the engagement process, which includes the Expose, Affect, and Elicit categories above.
+
+Let's look at the Engage matrix. We'll start by looking at some of the steps that can be taken to prepare for adversary engagement. You'll have to click on the Prepare tab at the top of the page in order to see this portion of the matrix.
+
+![image](https://github.com/user-attachments/assets/1be55075-155a-40f0-88bb-af148815db04)
+
+We can click through each of the actions in the matrix to get a brief description about them, as well as a link for further information. Here's the information on _Persona Creation_, which involves planning and creating some fictitious user (ostensibly for deception actions later).
+
+![image](https://github.com/user-attachments/assets/d09fea10-121d-4ab0-866a-d2f988f339ec)
+
+**[Task 5, Question 1] Under Prepare, what is ID SAC0002?** - Persona Creation
+
+Of course, we may be interested in learning how to implement the actions in the Engage matrix. Engage has various tools, aside from the matrix, that can help us here. You can see this by going to the very top of the Engage page and going to Tools > All Tools.
+
+It's worth checking the resources available here. If you scroll through, you'll probably spot this worksheet:
+
+![image](https://github.com/user-attachments/assets/6aeb63c1-db23-4c71-9e44-d5d7815da641)
+
+This is related to the previous question, for sure, but it's also worth checking out the contents of that worksheet. It goes into quite a bit of detail about how to create a fake user. The worksheet suggests that you should provide information about the persona, where they live, what work they do, when they work, what websites they visit, and so on.
+
+![image](https://github.com/user-attachments/assets/a78218e7-26a0-4c65-af1b-1d38273b7dcf)
+
+**[Task 5, Question 2] What is the name of the resource to aid you with the engagement activity from the previous question?** - Persona Profile Worksheet
+
+Let's head back to the matrix. This time we'll want to take a look at the Operate tab of the matrix. For the next question, we'll want to find an activity that involves _baiting_ a specific response from an adversary. You can click through the various activities to figure this one out, and you might start out by looking for activities that suggest we're trying to bait the adversary into doing something. _Lures_ might be a good place to start:
+
+![image](https://github.com/user-attachments/assets/918d4243-2fef-49f7-bcb0-37ada9c5bf5f)
+
+And indeed it's what we're looking for - we attempt to elicit a response from an adversary by using deceptive systems and artifacts.
+
+**[Task 5, Question 3] Which engagement activity baits a specific response from the adversary?** - Lures
+
+We conclude our look into MITRE Engage by looking at some of the activities present in the Understand tab of the matrix. This category specifically lists _Threat Model_ as one of the actions that can be taken, and the definition is as follows:
+
+![image](https://github.com/user-attachments/assets/6bfcf480-5bf4-4f12-8dda-8f4395babb63)
+
+**[Task 5, Question 4] What is the definition of Threat Model?** - A risk assessment that models organizational strengths and weaknesses
+
 ## [Task 6] MITRE D3FEND
+
+As the naming scheme for this resource suggests, MITRE's Detection, Denial, and Disruption Framework Empowering Network Defense Framework (the D3FEND Framework) takes the opposite approach to the ATT&CK Framework. It is focused on outlining countermeasures that can be taken against a cyberattack. This resource is still in beta (as of the room's writing), and is funded by the NSA. Checking an artifact in the D3FEND matrix gives information about what the defense tactic is, how it works, examples of it in use, and how it is related to other artifacts.
+
+Like with other MITRE resources, it is possible to filter this matrix based on techniques from the ATT&CK matrix. At the top left of the matrix, there's actually an option to perform an ATT&CK Lookup, which will filter out artifacts on the D3FEND matrix based on the ATT&CK technique.
+
+![image](https://github.com/user-attachments/assets/86415e16-25f1-454e-87f3-a2e05b48388f)
+
+**[Task 6, Question 1] What is the first MITRE ATT&CK technique listed in the ATT&CK Lookup dropdown?** - Data Obfuscation
+
+If you click on any of the ATT&CK techniques in this list, you'll be given information on how you might be able to detect and mitigate the technique. The D3FEND Inferred Relationships graph provides defense techniques that might help in dealing with the technique. Here's the graph for the Data Obfuscation technique:
+
+![image](https://github.com/user-attachments/assets/46c3d226-6a3c-4e2b-9399-1a1fa4a8ad38)
+
+The boxes to the left are all D3FEND techniques. We see how they can be used to detect and isolate data obfuscation attempts, as well as how they can be used to analyze and filter through outbound internet traffic. Note that this feature is still in development; it is likely to change in the future.
+
+**[Task 6, Question 2] In D3FEND Inferred Relationships, what does the ATT&CK technique from the previous question produce?** - Outbound Internet Network Traffic
 
 ## [Task 7] ATT&CK Emulation Plans
 
+Part of MITRE Corporation is the MITRE Engenuity foundation, which promotes the development of projects and services to help advance cybersecurity efforts, among other things. It is responsible for the Center of Threat-Informed Defense (CITD) organization, the Adversary Emulation Library, and the ATT&CK Emulation Plans.
+
+The CITD consists of companies and vendors around the globe, who are all tasked with researching cyber threats and associated TTPs. The companies and vendors include Microsoft, Verizon, Splunk, AttackIQ, and Red Canary. The end goal of the organization is to advance open-source software, methodologies, and frameworks, as well as to expand the knowledge base provided by the ATT&CK Framework.
+
+The Adversary Emulation Library provides freely-accessible adversary emulation plans, which are useful in blue/red teaming exercises. These are contributions from CITD.
+
+The ATT&CK Emulation Plans provide a step-by-step guide on how to mimic a certain threat group. This might be helpful for an organization if they're worried about specific threat groups targeting them. There are a wide variety of plans available on CITD's Adversary Emulation Library GitHub page, though the room calls out the plans for APT3, APT29, and FIN6. Let's look at these.
+
+We'll start by looking at the APT 3 Emulation Plan. Navigating to the link in the task for APT3, we are led to a MITRE ATT&CK page that provides a broad description of the emulation process. There's a flowchart here illustrating three phases of an attack that could be carried out by APT3:
+
+![image](https://github.com/user-attachments/assets/7c24fa3f-3c95-4e62-81e4-cd6f89b8fa32)
+
+**[Task 7, Question 1] In Phase 1 for the APT3 Emulation Plan, what is listed first?** - C2 Setup
+
+Beneath these are the documents for the emulation plan, including the overall outline as well as a Field Manual that supplements the emulation plan. The latter provides command-by-command actions that a group is known to use and how to exhibit the same behavior using other tools. We'll be taking a look at the main Emulation Plan document. You can use the Table of Contents to find information about how the group carries out a specific part of the cyberattack - in this case, here's how they might accomplish persistence:
+
+![image](https://github.com/user-attachments/assets/f1c682cc-ebe8-43dd-825f-8ad14f132890)
+
+We see that a Windows binary gets replaced in this step.
+
+**[Task 7, Question 2] Under Persistence, what binary was replaced with cmd.exe?** - `sethc.exe`
+
+Now we'll take a look at APT29. This leads us to CITD's GitHub page, which provides a lot of information about how the group operates. We'll be looking at two scenarios:
+1. How APT29 conducts a "smash-and-grab," then performs espionage to gather and exfiltrate data; this includes other activities that are present in other cyberattacks.
+2. How APT29 more slowly and stealthily compromises the initial target and carries out a cyberattack from there.
+
+There are links on the GitHub page to the emulation plans for these two scenarios. Here's a brief outline of the infrastructure used in Scenario 1:
+
+![image](https://github.com/user-attachments/assets/a1475170-7fc3-428c-a2a2-cd6b672aa48f)
+
+**[Task 7, Question 3] Examining APT29, what C2 frameworks are listed in Scenario 1 Infrastructure? (format: tool1,tool2)** - Pupy,Metasploit Framework
+
+And here's the infrastructure used in Scenario 2. Note that the outline calls out a server that's running a general _offensive framework_. The authors specifically went with PoshC2 during their testing:
+
+![image](https://github.com/user-attachments/assets/4f2b2c5f-9206-4af2-be03-e42ba973cdf6)
+
+**[Task 7, Question 4] What C2 framework is listed in Scenario 2 Infrastructure?** - PoshC2
+
+We're actually not going to look at FIN6 for the last question (it's particularly instructive to look at its emulation plan, though). We'll be taking a look at the Sandworm Team, which was attributed to Russia and was responsible for cyberattacks including the spread of NotPetya. This is a particularly interesting piece of malware that disguises itself as ransomware while destroying the target system as much as possible. We'll be looking at the Emulation Plan, Scenario 1.
+
+![image](https://github.com/user-attachments/assets/52e4428d-f475-4377-8cfc-7f6b973ecf40)
+
+We can look up these tools in MITRE ATT&CK, so let's do so. We'll be checking out the P.A.S. Webshell. You can either look up the Sandworm Team in CTI > Groups, or you can look up the webshell in CTI > Software. For some reason, the search didn't work for me. Doing so yields the following information:
+
+![image](https://github.com/user-attachments/assets/93a1c578-b56d-4ea6-88b6-0a38967efd0c)
+
+**[Task 7, Question 5] Examine the emulation plan for Sandworm. What webshell is used for Scenario 1? Check MITRE ATT&CK for the Software ID for the webshell. What is the id? (format: webshell,id)** - P.A.S.,S0598
+
 ## [Task 8] ATT&CK and Threat Intelligence
+
+CTI, by the way, refers to _cyber threat intelligence_. It is the subject of the next section of rooms in this path, but in brief, it is focused on gathering information about TTPs associated with an adversary. This allows defense teams to make better strategic decisions. Typically, you'll have in-house teams in larger corporations that are dedicated to collecting threat intelligence, and you may also have vendors that provide threat intelligence such as CrowdStrike.
+
+Let's take a look at how MITRE ATT&CK can be used for threat intelligence. Say we're working in aviation, and the organization we're working in wants to move to the cloud. We're concerned about any APT groups that might target this sector and our move to the cloud, and we'd like to check if there are any gaps in coverage.
+
+Checking the CTI > Groups page on the ATT&CK website, we can look for adversaries that target the aviation sector. A simple CTRL+F, followed by a search for "aviation," will do. Here's one that we might be interested in:
+
+![image](https://github.com/user-attachments/assets/7b771d38-67be-4999-9381-1010683fdf17)
+
+**[Task 8, Question 1] What is a group that targets your sector who has been in operation since at least 2013?** - APT33
+
+Let's drill deeper into this group. Going to its page on ATT&CK, we can see that they employ a wide variety of techniques. Considering that we're attempting to move to the cloud, this is probably going to be one of the most concerning techniques for us:
+
+![image](https://github.com/user-attachments/assets/d6ea57cf-eacb-4aaf-a16b-99a0fae94d7a)
+
+**[Task 8, Question 2] As your organization is migrating to the cloud, is there anything attributed to this APT group that you should focus on? If so, what is it?** - Cloud Accounts
+
+The brief description of the technique above tells us how APT33 employs the Cloud Accounts technique: they use a piece of software known as _Ruler_, which is a command-line tool that abuses Microsoft Exchange services.
+
+**[Task 8, Question 3] What tool is associated with the technique from the previous question?** - Ruler
+
+So now we know that this APT group has a tool that can be used to compromise cloud accounts. We're probably interested in figuring out how to mitigate cloud account compromise, so let's investigate the technique itself in ATT&CK. Here are the list of mitigations provided:
+
+![image](https://github.com/user-attachments/assets/0df11f4c-dbea-4826-8756-d7a326d07834)
+
+We see that Multi-Factor Authentication is recommended for cloud accounts, particularly privileged ones. There are a variety of ways of implementing MFA, one of which is SMS.
+
+**[Task 8, Question 4] Referring to the technique from question 2, what mitigation method suggests using SMS messages as an alternative for its implementation?** - Multi-factor Authentication
+
+Also on the Cloud Accounts technique page, we see what platforms are affected by the technique. This is something that we should probably note down:
+
+![image](https://github.com/user-attachments/assets/11673eae-2b9e-4b13-b4b0-2cefac3e7a32)
+
+**[Task 8, Question 5] What platforms does the technique from question #2 affect?** - IaaS, Identity Provider, Office Suite, SaaS
+
+Reminder: MITRE's resources are not exclusively for blue teamers/defenders - they can be used by red teamers as well! As we saw in previous tasks, red team folks can use the information provided here to mimic adversaries and bypass controls, which can be beneficial in identifying security gaps. MITRE's resources are more for _purple teaming_, where blue teams and red teams come together to analyze an organization's security.
