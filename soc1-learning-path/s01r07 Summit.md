@@ -41,3 +41,78 @@ Analyzing sample 3 gives us basic information and network activity, as before. B
 Turns out that the malicious communication is occurring with that `bresonicz` domain. A backdoor is presumably being downloaded from this domain, and there's clearly some other communication happening with it. Let's block the domain this time by going to the DNS Filter. Just so that we're comprehensive, we'll go ahead and block the entire domain, not just the `emudyn` subdomain:
 
 ![image](https://github.com/user-attachments/assets/608f906b-7de6-4d0a-ba7a-54a78526e62c)
+
+This yields the next flag.
+
+**[Task 1, Question 3] What is the third flag you receive after successfully detecting `sample3.exe`?** - `THM{4eca9e2f61a19ecd5df34c788e7dce16}`
+
+Now Sphinx is getting a little annoyed. It's quite easy to get new domains, sure, but it also takes a little bit of time to register them and set up new records and all that. However, many attackers would continue their operations in spite of this, and Sphinx is no different. With sample 4, we'll need to investigate what artifacts/changes are made on the system. Here's what our scanner picked up on:
+
+![image](https://github.com/user-attachments/assets/e9a41e4a-52d3-4c81-a63d-a31648229fdc)
+
+We see that the sample makes a change to `HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection` - namely, it sets the `DisableRealtimeMonitoring` value to 1, meaning real-time protection is turned off. From here on, we'll want to look at the Sigma Rule Builder.
+
+We'll talk more about Sigma rules later, but these are detection rules that can be matched against certain behaviors and activities. In this case, we have a registry key that's being edited, so let's look at Sysmon Event Logs:
+
+![image](https://github.com/user-attachments/assets/92aa00ca-1028-46b9-ae5b-d60da6ef17e6)
+
+Then we are prompted to choose a Sysmon event to target. In this case, we'll want to look at Registry Modifications.
+
+![image](https://github.com/user-attachments/assets/80213b39-8efe-420b-9f8d-cca8a2648968)
+
+Now we'll want to set up the rule. We're told to enter information about the registry key being changed. The key is `HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection`. The Registry Name is `DisableRealtimeMonitoring` and the value is 1. For the ATT&CK ID, we'll need to investigate the ATT&CK matrix. Looking around, the Defense Evasion tactic includes the _Impair Defenses_ technique, which is what's going on here.
+
+![image](https://github.com/user-attachments/assets/c2123c6f-8730-4f9e-8eb4-755eb44a59b3)
+
+Hence, our Sigma Rule will look like this:
+
+![image](https://github.com/user-attachments/assets/6a01bb6d-f3cf-4ece-beb7-d00d5c599ced)
+
+Doing this yields our next flag.
+
+**[Task 1, Question 4] What is the fourth flag you receive after successfully detecting `sample4.exe`?** - `THM{c956f455fc076aea829799c0876ee399}`
+
+Now Sphinx is mad. We've forced the attacker to reconfigure their tools and methods. Now they had to spend time and effort coming up with new ways to continue their operations. Fortunately (for them) they have a good budget, so they can keep going, but at around this point some attackers would give up.
+
+A new sample is available for us to investigate, so let's do so. Apparently, the attacker has some server-side stuff that allows them to change artifacts on the host machine, so we'll need to block based on behavior in a different way.
+
+We see, in the HTTP requests, that the sample reaches out to an IP address to get a beacon file. That beacon file then communicates with what seems to be a malicious domain:
+
+![image](https://github.com/user-attachments/assets/53068e90-816a-4309-9c9c-6dff8c6823ae)
+
+Sphinx was also kind enough to attach a log of outgoing connections, and there's a lot of connections that communicate with the malicious IP address - `51.102.10.19`. Every time the communication happens, 97 bytes are transferred. This might be something we can block:
+
+![image](https://github.com/user-attachments/assets/9e1bcd49-1c2d-4b52-8865-e3d7dd256459)
+
+We'll create a new Sigma rule for this one. We'll create a rule based on Sysmon Event Logs, but this time, we'll target events relating to network connections. We are then prompted to enter information about the kind of connection we want to block.
+- The remote IP that seems malicious is `51.102.10.19`. However, remember that the attacker can change IPs pretty easily. So we'll actually want to detect _any_ IP address instead.
+- All communications with this IP seem to take place over port 443, but the attacker can change this as needed. To be comprehensive, we'll also block _any_ remote port. The rest of our rule will be specific enough that it picks up on just the malicious traffic.
+- We saw that 97 bytes were transferred each time a request was made, so we'll note this in the Size field.
+- The frequency of the communications is every 30 minutes, which is 1800 seconds.
+- Everything we see here is characteristic of a command-and-control server, so we'll note that as the ATT&CK ID.
+
+![image](https://github.com/user-attachments/assets/4145f2e7-e712-4f65-9efd-d5c8e3d5449a)
+
+This yields our next flag.
+
+**[Task 1, Question 5] What is the fifth flag you receive after successfully detecting `sample5.exe`?** - `THM{46b21c4410e47dc5729ceadef0fc722e}`
+
+It appears that Sphinx is at their wits' end. We've now forced them to change the tool that they use to carry out the attack. In this case, they had to create a new tool and learn how to use it, and this uses up their resources significantly. Our goal now is to change the attacker's techniques and procedures.
+
+Let's look at the analysis for sample 6. Interestingly, the analysis contains a new section about files:
+
+![image](https://github.com/user-attachments/assets/ad43b353-69e2-4bbc-ab7c-cc14c8fffcd8)
+
+What's up with that? Sphinx shared a log of commands that they used with previous samples, so let's see what's inside.
+
+![image](https://github.com/user-attachments/assets/e7b33e0a-8348-4ddf-a395-ca2f48a52ffe)
+
+Turns out that whatever tool he's using creates a log of data to exfiltrate - `exfiltr8.log`. Let's try to set up a rule based on this. Going into the Sigma Rule Builder, we can create a new rule based on Sysmon Event Logs. This time, we'll target events pertaining to File Creation or Modification.
+
+We know that the exfiltration file is created in the `%temp%` directory, so that will be the file path. The file itself is called `exfiltr8.log`, and based on the commands and file name, we can say that the attacker is employing the Exfiltration tactic.
+
+![image](https://github.com/user-attachments/assets/4c20aa7d-abab-4598-9619-348a680cb5ef)
+
+This is enough for Sphinx to give up attacking the system. We got to the top of the Pyramid of Pain! Doing all of this yields the final flag:
+
+**[Task 1, Question 6] What is the final flag you receive from Sphinx?** - `THM{c8951b2ad24bbcbac60c16cf2c83d92c}`
